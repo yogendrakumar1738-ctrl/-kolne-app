@@ -11,7 +11,7 @@ class KolneApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'KOLNE',
-      theme: ThemeData(brightness: Brightness.dark, scaffoldBackgroundColor: Colors.black),
+      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
       home: const HomeScreen(),
     );
   }
@@ -24,40 +24,36 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _index = 0;
-  bool _showBottom = true;
-  final _pages = [const FeedPage(), const SearchPage(), const Center(child: Text("Create", style: TextStyle(color: Colors.white))), const Center(child: Text("Inbox", style: TextStyle(color: Colors.white))), const Center(child: Text("Profile", style: TextStyle(color: Colors.white)))];
+  int currentIndex = 0;
   @override
   Widget build(BuildContext context) {
+    List<Widget> pages = [
+      const FeedPage(),
+      const SearchPage(),
+      const CreatePage(),
+      const InboxPage(),
+      const ProfilePage(),
+    ];
     return Scaffold(
-      body: NotificationListener<ScrollNotification>(
-        onNotification: (n) {
-          if (n is ScrollUpdateNotification) {
-            if (n.scrollDelta! > 0 && _showBottom) setState(()=>_showBottom=false);
-            if (n.scrollDelta! < 0 && !_showBottom) setState(()=>_showBottom=true);
-          }
-          return true;
+      body: pages[currentIndex],
+      bottomNavigationBar: BottomNavigationBar(
+        backgroundColor: Colors.black,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.grey,
+        currentIndex: currentIndex,
+        onTap: (int index) {
+          setState(() {
+            currentIndex = index;
+          });
         },
-        child: _pages[_index],
-      ),
-      bottomNavigationBar: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: _showBottom ? 70 : 0,
-        child: _showBottom ? BottomNavigationBar(
-          backgroundColor: Colors.black,
-          type: BottomNavigationBarType.fixed,
-          selectedItemColor: Colors.white,
-          unselectedItemColor: Colors.grey,
-          currentIndex: _index,
-          onTap: (i)=>setState(()=>_index=i),
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-            BottomNavigationBarItem(icon: Icon(Icons.add_box, size: 32), label: ''),
-            BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-          ],
-        ) : const SizedBox(),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box, size: 32), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        ],
       ),
     );
   }
@@ -70,4 +66,64 @@ class FeedPage extends StatelessWidget {
     return PageView.builder(
       scrollDirection: Axis.vertical,
       itemCount: 5,
-      itemBuilder: (c, i
+      itemBuilder: (BuildContext context, int index) {
+        return Container(
+          color: Colors.black,
+          child: Stack(
+            children: [
+              Center(
+                child: Text('KOLNE Video ${index + 1}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+              ),
+              const Positioned(bottom: 30, left: 15, child: Text('@yogendra • Bharat Ka App', style: TextStyle(color: Colors.white))),
+              const Positioned(
+                bottom: 30,
+                right: 15,
+                child: Column(
+                  children: [
+                    Icon(Icons.favorite, color: Colors.white, size: 30),
+                    SizedBox(height: 15),
+                    Icon(Icons.comment, color: Colors.white),
+                    SizedBox(height: 15),
+                    Icon(Icons.share, color: Colors.white),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class SearchPage extends StatelessWidget {
+  const SearchPage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Search Page', style: TextStyle(color: Colors.white, fontSize: 22)));
+  }
+}
+
+class CreatePage extends StatelessWidget {
+  const CreatePage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Create +', style: TextStyle(color: Colors.white, fontSize: 30)));
+  }
+}
+
+class InboxPage extends StatelessWidget {
+  const InboxPage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Inbox', style: TextStyle(color: Colors.white, fontSize: 22)));
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const Center(child: Text('Profile', style: TextStyle(color: Colors.white, fontSize: 22)));
+  }
+}
