@@ -12,167 +12,150 @@ class KolneApp extends StatelessWidget {
   const KolneApp({super.key, required this.cameras});
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(),
-      home: HomeScreen(cameras: cameras),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Color(0xFF0A1F16)), home: MainNav(cameras: cameras));
   }
 }
 
-class HomeScreen extends StatefulWidget {
+class MainNav extends StatefulWidget {
   final List<CameraDescription> cameras;
-  const HomeScreen({super.key, required this.cameras});
+  const MainNav({super.key, required this.cameras});
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<MainNav> createState() => _MainNavState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  bool isShort = true;
-  CameraController? _controller;
-  List<String> categories = ["All","Natural","Bhakti","Motivational","Knowledge","Fact","Shayari"];
+class _MainNavState extends State<MainNav> {
+  int idx = 0;
+  bool showBar = true;
+  bool daily = false;
 
   @override
   void initState() {
     super.initState();
-    _initCamera();
-  }
-
-  Future<void> _initCamera() async {
-    if (widget.cameras.isEmpty) return;
-    _controller = CameraController(widget.cameras[0], ResolutionPreset.high);
-    await _controller!.initialize();
-    if (mounted) setState(() {});
-  }
-
-  @override
-  void dispose() {
-    _controller?.dispose();
-    super.dispose();
-  }
-
-  String _filterGaali(String text) {
-    if (text.toLowerCase().contains("mc") || text.toLowerCase().contains("bc")) {
-      return "*** Comment Hidden - Family Safe ***";
-    }
-    return text;
-  }
-
-  void _openCreateSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF1A1A1A),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(10))),
-              const SizedBox(height: 15),
-              const Text("Create - 7 Format (Natural)", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 15),
-              ListTile(leading: const Icon(Icons.videocam, color: Colors.orange), title: const Text("1. Self Vedio"), subtitle: const Text("Camera se Direct - Instagram jaisa"), onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => CameraPage(controller: _controller!)))),
-              ListTile(leading: const Icon(Icons.smart_toy, color: Colors.purple), title: const Text("2. AI Vedio Creat"), subtitle: const Text("1 Min Natural Vedio - AI se")),
-              ListTile(leading: const Icon(Icons.photo, color: Colors.blue), title: const Text("3. Photo Post"), subtitle: const Text("Single / Multiple Photos")),
-              ListTile(leading: const Icon(Icons.text_fields, color: Colors.yellow), title: const Text("4. Shayari / Text Thought")),
-              ListTile(leading: const Icon(Icons.park, color: Colors.green), title: const Text("5. Natural 1-Min Vedio"), subtitle: const Text("Nature + Life")),
-              ListTile(leading: const Icon(Icons.mic, color: Colors.red), title: const Text("6. Audio / Podcast")),
-              ListTile(leading: const Icon(Icons.live_tv, color: Colors.pink), title: const Text("7. Live - Family Safe"), subtitle: const Text("Gaali Filter ON + Face Verify")),
-              const SizedBox(height: 10),
-              const Text("Features: Like, Comment (Hide), Share, Music, Self Message (Mutual)", style: TextStyle(fontSize: 10, color: Colors.white38), textAlign: TextAlign.center),
-            ],
-          ),
-        );
-      },
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!daily) {
+        daily = true;
+        showDialog(context: context, builder: (_) => AlertDialog(
+          backgroundColor: Color(0xFF1B4D3E),
+          title: Text("🌿 Roj Welcome YK"),
+          content: Text("+10 Coins | Natural Video Banao", style: TextStyle(color: Colors.white70)),
+          actions: [TextButton(onPressed: ()=>Navigator.pop(context), child: Text("OK", style: TextStyle(color: Colors.white)))],
+        ));
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Stack(
-        children: [
-          PageView.builder(
-            scrollDirection: Axis.vertical,
-            itemCount: 20,
-            itemBuilder: (context, index) {
-              return Container(
-                color: Colors.grey[900],
-                child: Stack(
-                  children: [
-                    Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(isShort? "Short Reel ${index+1}" : "Long Reel ${index+1}", style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                          Text(isShort? "Natural - 15-60 sec" : "Natural - 2-5 min", style: const TextStyle(color: Colors.white54)),
-                          const SizedBox(height: 20),
-                          Container(color: Colors.black54, padding: const EdgeInsets.all(8), child: Text(_filterGaali(index % 2 == 0? "mast natural vedio" : "nice mc"), style: const TextStyle(color: Colors.white70, fontSize: 12))),
-                        ],
-                      ),
-                    ),
-                    Positioned(
-                      right: 12, bottom: 130,
-                      child: Column(
-                        children: const [
-                          Icon(Icons.favorite, size: 32), Text("Like", style: TextStyle(fontSize: 10)),
-                          SizedBox(height: 18),
-                          Icon(Icons.comment, size: 32), Text("Hide", style: TextStyle(fontSize: 10, color: Colors.green)),
-                          SizedBox(height: 18),
-                          Icon(Icons.share, size: 32),
-                          SizedBox(height: 18),
-                          Icon(Icons.music_note, size: 32), Text("Music", style: TextStyle(fontSize: 10)),
-                          SizedBox(height: 18),
-                          Icon(Icons.message, size: 32), Text("Chat\nMutual", style: TextStyle(fontSize: 8), textAlign: TextAlign.center),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          Positioned(
-            top: 50, left: 10, right: 10,
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    ChoiceChip(label: const Text("Short"), selected: isShort, onSelected: (v) => setState(() => isShort = true)),
-                    const SizedBox(width: 10),
-                    ChoiceChip(label: const Text("Long"), selected:!isShort, onSelected: (v) => setState(() => isShort = false)),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: categories.map((e) => Container(margin: const EdgeInsets.only(right: 8), padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(20)), child: Text(e, style: const TextStyle(fontSize: 12)))).toList()),
-                ),
-              ],
-            ),
-          ),
-          Positioned(top: 48, right: 14, child: Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: Colors.green, borderRadius: BorderRadius.circular(8)), child: const Text("Face Verify: 1 Mobile = 1 ID", style: TextStyle(fontSize: 8)))),
-        ],
+      body: NotificationListener<ScrollNotification>(
+        onNotification: (n){
+          if(n is ScrollStartNotification && showBar) setState(()=>showBar=false);
+          if(n is ScrollEndNotification) Future.delayed(Duration(seconds: 2), ()=> setState(()=>showBar=true));
+          return false;
+        },
+        child: idx==0? FeedPage(cameras: widget.cameras) : idx==4? ProfilePage() : Center(child: Text("Coming Soon", style: TextStyle(color: Colors.white))),
       ),
-      floatingActionButton: FloatingActionButton(onPressed: _openCreateSheet, backgroundColor: Colors.white, child: const Icon(Icons.add, color: Colors.black, size: 32)),
+      bottomNavigationBar: AnimatedContainer(duration: Duration(milliseconds: 300), height: showBar?70:0, child: showBar? BottomNavigationBar(
+        backgroundColor: Color(0xFF0A1F16), type: BottomNavigationBarType.fixed,
+        selectedItemColor: Colors.white, unselectedItemColor: Colors.white54, currentIndex: idx,
+        onTap: (i){ if(i==2){ showModalBottomSheet(context: context, backgroundColor: Color(0xFF1B4D3E), shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))), builder: (_)=> SheetPage(cameras: widget.cameras)); } else setState(()=>idx=i); },
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+          BottomNavigationBarItem(icon: Container(padding: EdgeInsets.all(10), decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF1B4D3E), Color(0xFF6A1B9A)]), shape: BoxShape.circle), child: Icon(Icons.add, color: Colors.white)), label: ""),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite, color: Color(0xFF6A1B9A)), label: "Like"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ): SizedBox()),
     );
   }
 }
 
-class CameraPage extends StatelessWidget {
-  final CameraController controller;
-  const CameraPage({super.key, required this.controller});
+class FeedPage extends StatefulWidget {
+  final List<CameraDescription> cameras;
+  const FeedPage({super.key, required this.cameras});
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("Self Vedio - Natural"), backgroundColor: Colors.black),
-      backgroundColor: Colors.black,
-      body: CameraPreview(controller),
-      floatingActionButton: FloatingActionButton(onPressed: () {}, child: const Icon(Icons.camera_alt)),
+  State<FeedPage> createState()=> _FeedPageState();
+}
+
+class _FeedPageState extends State<FeedPage> {
+  List<bool> liked = List.generate(20, (_)=>false);
+  @override
+  Widget build(BuildContext context){
+    return PageView.builder(scrollDirection: Axis.vertical, itemCount: 20, itemBuilder: (c,i){
+      return Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0A1F16), Color(0xFF2D1B4E)])), child: Stack(children: [
+        Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [Icon(Icons.play_circle, size: 70, color: Colors.white24), Text("Natural Reel ${i+1}", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)), Text("Dark Green + Purple + White", style: TextStyle(color: Colors.white54))])),
+        Positioned(right: 10, bottom: 30, child: Column(children: [
+          InkWell(onTap:(){setState(()=>liked[i]=!liked[i]);}, child: Column(children: [Icon(liked[i]?Icons.favorite:Icons.favorite_border, color: liked[i]?Colors.red:Colors.white, size: 34), Text("Like", style: TextStyle(fontSize: 10, color: Colors.white))])),
+          SizedBox(height: 18),
+          InkWell(onTap:()=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Comment - Gaali *** Hide"))), child: Column(children: [Icon(Icons.comment, color: Colors.white, size: 34), Text("Hide", style: TextStyle(fontSize: 10, color: Colors.white))])),
+          SizedBox(height: 18),
+          InkWell(onTap:()=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Share"))), child: Column(children: [Icon(Icons.share, color: Colors.white, size: 34), Text("Share", style: TextStyle(fontSize: 10, color: Colors.white))])),
+          SizedBox(height: 18),
+          InkWell(onTap:()=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Music Add"))), child: Column(children: [Icon(Icons.music_note, color: Color(0xFF00FF9D), size: 34), Text("Music", style: TextStyle(fontSize: 10, color: Colors.white))])),
+          SizedBox(height: 18),
+          InkWell(onTap:()=>ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Chat - Mutual"))), child: Column(children: [Icon(Icons.message, color: Colors.white, size: 34), Text("Chat", style: TextStyle(fontSize: 10, color: Colors.white))])),
+        ])),
+      ]));
+    });
+  }
+}
+
+class SheetPage extends StatelessWidget {
+  final List<CameraDescription> cameras;
+  const SheetPage({super.key, required this.cameras});
+  @override
+  Widget build(BuildContext context){
+    return Padding(padding: EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [
+      Text("Create - 7 Format", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+      ListTile(leading: Icon(Icons.videocam, color: Colors.orange), title: Text("1. Self Vedio - User Bana Sakta Hai", style: TextStyle(color: Colors.white)), onTap: (){Navigator.pop(context); Navigator.push(context, MaterialPageRoute(builder: (_)=>CamPage(cameras: cameras)));}),
+      ListTile(leading: Icon(Icons.smart_toy, color: Colors.purple), title: Text("2. AI Vedio Creat", style: TextStyle(color: Colors.white))),
+      ListTile(leading: Icon(Icons.photo, color: Colors.blue), title: Text("3. Photo Post", style: TextStyle(color: Colors.white))),
+      ListTile(leading: Icon(Icons.text_fields, color: Colors.yellow), title: Text("4. Shayari / Text", style: TextStyle(color: Colors.white))),
+      ListTile(leading: Icon(Icons.park, color: Colors.green), title: Text("5. Natural 1-Min", style: TextStyle(color: Colors.white))),
+      ListTile(leading: Icon(Icons.mic, color: Colors.red), title: Text("6. Audio / Podcast", style: TextStyle(color: Colors.white))),
+      ListTile(leading: Icon(Icons.live_tv, color: Colors.pink), title: Text("7. Live - Family Safe", style: TextStyle(color: Colors.white))),
+    ]));
+  }
+}
+
+class CamPage extends StatefulWidget {
+  final List<CameraDescription> cameras;
+  const CamPage({super.key, required this.cameras});
+  @override
+  State<CamPage> createState()=> _CamPageState();
+}
+
+class _CamPageState extends State<CamPage> {
+  CameraController? con;
+  bool ready=false; bool rec=false;
+  @override
+  void initState(){super.initState(); init();}
+  Future<void> init() async {
+    if(widget.cameras.isEmpty) return;
+    con=CameraController(widget.cameras.first, ResolutionPreset.high, enableAudio: true);
+    await con!.initialize();
+    setState(()=>ready=true);
+  }
+  @override
+  void dispose(){con?.dispose(); super.dispose();}
+  Future<void> toggle() async {
+    if(!rec){ await con!.startVideoRecording(); setState(()=>rec=true); }
+    else{ final f=await con!.stopVideoRecording(); setState(()=>rec=false); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Video Save: ${f.path}"))); Navigator.pop(context); }
+  }
+  @override
+  Widget build(BuildContext context){
+    return Scaffold(appBar: AppBar(title: Text("Self Vedio"), backgroundColor: Color(0xFF0A1F16)), backgroundColor: Colors.black,
+      body: ready && con!=null? Stack(children: [CameraPreview(con!), if(rec) Positioned(top: 20, left: 20, child: Container(padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5), decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(10)), child: Text("● REC")))]): Center(child: Text("Camera Allow Karo", style: TextStyle(color: Colors.white))),
+      floatingActionButton: ready? FloatingActionButton.large(backgroundColor: rec?Colors.red:Colors.white, onPressed: toggle, child: Icon(rec?Icons.stop:Icons.videocam, color: rec?Colors.white:Colors.black, size: 35)):null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+}
+
+class ProfilePage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context){
+    return Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Color(0xFF0A1F16), Color(0xFF6A1B9A)])), child: Scaffold(backgroundColor: Colors.transparent, appBar: AppBar(title: Text("Profile"), backgroundColor: Colors.transparent), body: Center(child: Text("YK - Face Verify ✅", style: TextStyle(color: Colors.white, fontSize: 18)))));
   }
 }
