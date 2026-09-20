@@ -1,129 +1,22 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const KolneApp());
+void main()=>runApp(KolneFinal());
+class KolneFinal extends StatelessWidget{
+@override Widget build(BuildContext c)=>MaterialApp(debugShowCheckedModeBanner:false, home:Home());
 }
-
-class KolneApp extends StatelessWidget {
-  const KolneApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'KOLNE',
-      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
-      home: const HomeScreen(),
-    );
-  }
-}
-
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
-  @override
-  State<HomeScreen> createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  int currentIndex = 0;
-  @override
-  Widget build(BuildContext context) {
-    List<Widget> pages = [
-      const FeedPage(),
-      const SearchPage(),
-      const CreatePage(),
-      const InboxPage(),
-      const ProfilePage(),
-    ];
-    return Scaffold(
-      body: pages[currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey,
-        currentIndex: currentIndex,
-        onTap: (int index) {
-          setState(() {
-            currentIndex = index;
-          });
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.add_box, size: 32), label: ''),
-          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: 'Inbox'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class FeedPage extends StatelessWidget {
-  const FeedPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return PageView.builder(
-      scrollDirection: Axis.vertical,
-      itemCount: 5,
-      itemBuilder: (BuildContext context, int index) {
-        return Container(
-          color: Colors.black,
-          child: Stack(
-            children: [
-              Center(
-                child: Text('KOLNE Video ${index + 1}', style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-              ),
-              const Positioned(bottom: 30, left: 15, child: Text('@yogendra • Bharat Ka App', style: TextStyle(color: Colors.white))),
-              const Positioned(
-                bottom: 30,
-                right: 15,
-                child: Column(
-                  children: [
-                    Icon(Icons.favorite, color: Colors.white, size: 30),
-                    SizedBox(height: 15),
-                    Icon(Icons.comment, color: Colors.white),
-                    SizedBox(height: 15),
-                    Icon(Icons.share, color: Colors.white),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-class SearchPage extends StatelessWidget {
-  const SearchPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Search Page', style: TextStyle(color: Colors.white, fontSize: 22)));
-  }
-}
-
-class CreatePage extends StatelessWidget {
-  const CreatePage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Create +', style: TextStyle(color: Colors.white, fontSize: 30)));
-  }
-}
-
-class InboxPage extends StatelessWidget {
-  const InboxPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Inbox', style: TextStyle(color: Colors.white, fontSize: 22)));
-  }
-}
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const Center(child: Text('Profile', style: TextStyle(color: Colors.white, fontSize: 22)));
-  }
-}
+class Home extends StatefulWidget{ @override _HomeState createState()=>_HomeState();}
+class _HomeState extends State<Home>{
+bool isShort=true;
+void openCreate(){showModalBottomSheet(context:context, builder:(_)=>Container(padding:EdgeInsets.all(16), child:Column(mainAxisSize:MainAxisSize.min, children:[
+Text("7 Format", style:TextStyle(fontWeight:FontWeight.bold, fontSize:18)),
+ListTile(leading:Icon(Icons.videocam), title:Text("1. Self Vedio")),
+ListTile(leading:Icon(Icons.smart_toy), title:Text("2. AI Vedio Creat - 1 Min")),
+ListTile(leading:Icon(Icons.photo), title:Text("3. Photo Post")),
+ListTile(leading:Icon(Icons.text_fields), title:Text("4. Shayari / Thought")),
+ListTile(leading:Icon(Icons.park), title:Text("5. Natural 1-Min")),
+ListTile(leading:Icon(Icons.mic), title:Text("6. Audio / Podcast")),
+ListTile(leading:Icon(Icons.live_tv), title:Text("7. Live")),
+])));}
+@override Widget build(BuildContext context){return Scaffold(backgroundColor:Colors.black, body:Stack(children:[
+PageView.builder(scrollDirection:Axis.vertical, itemCount:20, itemBuilder:(c,i)=>Container(color:Colors.grey[900], child:Center(child:Text(isShort?"Short ${i+1}":"Long ${i+1}", style:TextStyle(color:Colors.white))))),
+Positioned(top:45, left:10, child:Row(children:[ChoiceChip(label:Text("Short"), selected:isShort, onSelected:(v)=>setState(()=>isShort=true)), SizedBox(width:10), ChoiceChip(label:Text("Long"), selected:!isShort, onSelected:(v)=>setState(()=>isShort=false))])),
+]), floatingActionButton:FloatingActionButton(onPressed:openCreate, child:Icon(Icons.add)),);}}
