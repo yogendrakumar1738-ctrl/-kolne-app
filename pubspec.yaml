@@ -1,19 +1,21 @@
-name: kolne_app
-description: Kolne - Real 7 Format Working App
+name: kolne
+description: Kolne - Video App
 publish_to: 'none'
-version: 1.0.0+7
+version: 1.0.0+1
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.2.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-  camera: ^0.10.5+9
-  image_picker: ^1.0.7
-  record: ^6.1.1
-  path_provider: ^2.1.2
-  video_player: ^2.8.2
-  firebase_core: ^2.24.2
-  firebase_storage: ^11.6.0
-  cloud_firestore: ^4.15.8
+  cupertino_icons: ^1.0.6
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.3.1
+  firebase_storage: ^12.3.4
+  cloud_firestore: ^5.4
+  video_player: ^2.9.2
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
 flutter:
   uses-material-design: true
