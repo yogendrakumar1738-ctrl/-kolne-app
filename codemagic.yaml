@@ -8,6 +8,12 @@ workflows:
     scripts:
       - name: Get Packages
         script: flutter pub get
+      - name: Fix Old Android Code
+        script: |
+          cp android/app/google-services.json /tmp/ || echo "no json"
+          flutter create --platforms=android .
+          cp /tmp/google-services.json android/app/google-services.json || echo "restoring failed"
+          flutter pub upgrade
       - name: Build APK
         script: flutter build apk --release --no-tree-shake-icons
     artifacts:
