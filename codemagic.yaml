@@ -1,24 +1,14 @@
 workflows:
-  android-apk:
-    name: Android APK Build
+  kolne-apk:
+    name: KOLNE Real APK
+    instance_type: mac_mini_m2
     max_build_duration: 30
-    instance_type: mac_mini_m1
     environment:
       flutter: stable
     scripts:
-      - name: Fix Android v1 embedding
-        script: |
-          rm -rf android
-          rm -f pubspec.lock
-          flutter create . --platforms=android --project-name kolne --no-pub
-          ls android
+      - name: Get packages
+        script: flutter pub get
       - name: Build APK
-        script: |
-          flutter pub get
-          flutter build apk --release
+        script: flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/*.apk
-    publishing:
-      email:
-        recipients:
-          - yogendrakumar1738@gmail.com
+      - build/app/outputs/flutter-apk/app-release.apk
