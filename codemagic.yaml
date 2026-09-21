@@ -9,7 +9,8 @@ workflows:
       - name: Fix Android v1 embedding
         script: |
           rm -rf android
-          flutter create . --platforms=android
+          sed -i '' 's/^name:.*/name: kolne/' pubspec.yaml || sed -i 's/^name:.*/name: kolne/' pubspec.yaml
+          flutter create . --platforms=android --project-name kolne
       - name: Build APK
         script: |
           flutter pub get
