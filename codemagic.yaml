@@ -1,21 +1,22 @@
 workflows:
   android-apk:
     name: Android APK Build
-    max_build_duration: 60
-    instance_type: mac_mini_m2
+    max_build_duration: 30
+    instance_type: mac_mini_m1
     environment:
       flutter: stable
-      xcode: latest
-      cocoapods: default
     scripts:
       - name: Fix Android v1 embedding
         script: |
-          flutter clean
           rm -rf android
-          flutter create --org com.kolne.app --project-name kolne . --platforms=android
-          flutter pub get
+          flutter create --org com.kolne.app --project-name kolne --platforms=android .
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter pub get
+          flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - yogendrakumar1738@gmail.com
