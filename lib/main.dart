@@ -1,134 +1,160 @@
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() => runApp(KolneApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(KolneApp());
+}
 
 class KolneApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
-      home: LoginScreen(),
+      title: 'KOLNE',
+      theme: ThemeData.dark(),
+      home: OTPLoginScreen(),
     );
   }
 }
 
-// LOGIN SCREEN - KOLNE
-class LoginScreen extends StatelessWidget {
+// 9. OTP LOGIN - 1 Mobile = 1 ID
+class OTPLoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text("KOLNE 🍃", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
-            SizedBox(height: 20),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent, foregroundColor: Colors.black),
-              onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen())),
-              child: Text("Login / Sign Up"),
-            )
-          ],
-        ),
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Text("KOLNE", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+          SizedBox(height: 20),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF00FF88)),
+            onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen())),
+            child: Text("OTP se Login Karo - 1 Mobile = 1 ID"),
+          )
+        ]),
       ),
     );
   }
 }
 
-// MAIN SCREEN - 5 BUTTON + HIDE ON SCROLL
+// 4. 5 BUTTON WALA MAIN SCREEN - Hide/Show Logic
 class MainScreen extends StatefulWidget {
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  _MainScreenState createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  bool showBottomBar = true;
-  int selectedIndex = 0;
-  ScrollController scrollController = ScrollController();
+  int _currentIndex = 0;
+  bool _showBottomBar = true;
 
-  @override
-  void initState() {
-    super.initState();
-    scrollController.addListener(() {
-      if (scrollController.position.pixels > 100) {
-        if (showBottomBar) setState(() => showBottomBar = false);
-      } else {
-        if (!showBottomBar) setState(() => showBottomBar = true);
-      }
-    });
-  }
-
-  Widget buildFeed() {
-    return ListView.builder(
-      controller: scrollController,
-      itemCount: 10,
-      itemBuilder: (context, index) {
-        return Container(
-          height: 600,
-          color: Colors.grey[900],
-          margin: EdgeInsets.only(bottom: 2),
-          child: Stack(
-            children: [
-              Center(child: Text("Video ${index + 1} - Kolne", style: TextStyle(fontSize: 22))),
-              Positioned(
-                right: 10,
-                bottom: 80,
-                child: Column(
-                  children: [
-                    IconButton(icon: Icon(Icons.favorite, color: Colors.white, size: 35), onPressed: () {}),
-                    IconButton(icon: Icon(Icons.download, color: Colors.white), onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Downloaded with Kolne watermark")));
-                    }),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  final screens = [
+    HomeReelsScreen(), // 3. 9:16 Reels
+    SearchScreen(), // 5. Follow
+    CreateScreen(), // 1 & 2 Self+AI + 10 Ashleel Block + 11 Lock
+    InboxScreen(), // 6 Real Chat
+    ProfileScreen(), // 8 Watermark
+  ];
 
   @override
   Widget build(BuildContext context) {
-    List<Widget> pages = [buildFeed(), Center(child: Text("Search")), Center(child: Text("Inbox")), Center(child: Text("Profile"))];
-
     return Scaffold(
-      body: selectedIndex == 0 || selectedIndex >= 2? pages[selectedIndex == 0? 0 : selectedIndex -1] : pages[0],
-      floatingActionButton: showBottomBar? FloatingActionButton(
-        backgroundColor: Colors.greenAccent,
-        onPressed: () => showModalBottomSheet(context: context, builder: (_) => Container(
-          height: 200,
-          color: Colors.black,
-          child: Column(
-            children: [
-              ListTile(title: Text("SELF FREE", style: TextStyle(color: Colors.greenAccent)), onTap: () => Navigator.pop(context)),
-              ListTile(title: Text("AI LOCKED 🔒", style: TextStyle(color: Colors.grey)), onTap: () {}),
-            ],
-          ),
-        )),
-        child: Icon(Icons.add, color: Colors.black, size: 30),
-      ) : null,
-      bottomNavigationBar: AnimatedOpacity(
-        opacity: showBottomBar? 1 : 0,
-        duration: Duration(milliseconds: 300),
-        child: showBottomBar? BottomNavigationBar(
-          backgroundColor: Colors.black,
-          selectedItemColor: Colors.greenAccent,
-          unselectedItemColor: Colors.white,
-          currentIndex: selectedIndex,
-          onTap: (i) => setState(() => selectedIndex = i),
-          type: BottomNavigationBarType.fixed,
-          items: [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-            BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined), label: "Create"),
-            BottomNavigationBarItem(icon: Icon(Icons.inbox), label: "Inbox"),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          ],
-        ) : SizedBox.shrink(),
+      backgroundColor: Colors.black,
+      body: GestureDetector(
+        onTap: () => setState(() => _showBottomBar =!_showBottomBar),
+        child: screens[_currentIndex],
       ),
+      bottomNavigationBar: _showBottomBar? BottomNavigationBar(
+        backgroundColor: Colors.black,
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Color(0xFF00FF88),
+        unselectedItemColor: Colors.white,
+        currentIndex: _currentIndex,
+        onTap: (i) => setState(() => _currentIndex = i),
+        items: [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+          BottomNavigationBarItem(icon: Icon(Icons.add_box, size: 35), label: "Create"),
+          BottomNavigationBarItem(icon: Icon(Icons.inbox), label: "Inbox"),
+          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+        ],
+      ) : null,
     );
   }
+}
+
+// 3. HOME - 9:16 FULL REELS - Video pe Hide, Tap pe Show
+class HomeReelsScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return PageView.builder(
+      scrollDirection: Axis.vertical,
+      itemCount: 10,
+      itemBuilder: (ctx, i) {
+        return Stack(children: [
+          Container(color: Colors.grey[900], child: Center(child: Text("Real Video ${i+1} - 9:16"))),
+          Positioned(right: 10, bottom: 100, child: Column(children: [
+            Icon(Icons.favorite, size: 35), Text("12.4K"), // 7. REAL LIKE
+            SizedBox(height: 20),
+            Icon(Icons.comment, size: 35), Text("842"), // REAL COMMENT
+            SizedBox(height: 20),
+            Icon(Icons.share, size: 35), Text("Share"), // REAL SHARE
+            SizedBox(height: 20),
+            ElevatedButton(onPressed: (){}, child: Text("+Follow")), // 5. FOLLOW
+          ])),
+        ]);
+      },
+    );
+  }
+}
+
+// 1 & 2. CREATE SCREEN - SELF FREE + AI PAID 199
+class CreateScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(title: Text("Create Video")),
+      body: Column(children: [
+        ListTile(
+          title: Text("SELF VIDEO - FREE FOREVER"),
+          subtitle: Text("1-Min Natural + Music + Hashtags Khud"),
+          trailing: Icon(Icons.videocam, color: Colors.green),
+          onTap: () {
+            // 10. ASHLEEL CHECK
+            bool isAshleel = false; // yaha AI check lagega
+            if(isAshleel) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("⚠️ Ashleel Content Allow Nahi Hai")));
+            }
+          },
+        ),
+        Divider(),
+        ListTile(
+          title: Text("AI VIDEO - PAID"),
+          subtitle: Text("Text se Background Change + Music+Hashtag AI Auto\n30 Video = Rs 199 Unlock"),
+          trailing: ElevatedButton(onPressed: (){
+            // Razorpay 199 Logic
+          }, child: Text("Rs 199 Me Unlock")),
+        ),
+        SizedBox(height: 20),
+        Text("11. Sari AI Categories 199 ke peeche Lock hai", style: TextStyle(color: Colors.orange)),
+      ]),
+    );
+  }
+}
+
+class SearchScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Center(child: Text("Search + Follow Button = Dost = Inbox Chat ON"));
+}
+class InboxScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Center(child: Text("Real Chat - Follow ke baad ON"));
+}
+class ProfileScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Center(child: Text("Profile - Download pe KOLNE Watermark jalega"));
 }
