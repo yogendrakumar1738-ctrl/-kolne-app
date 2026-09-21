@@ -1,18 +1,34 @@
 workflows:
-  kolne-apk:
-    name: KOLNE Real APK
-    instance_type: mac_mini_m2
+  android-release:
+    name: KOLNE APK Fixed
     max_build_duration: 30
+    instance_type: mac_mini_m2
     environment:
       flutter: stable
+      groups:
+        - google_play
     scripts:
+      - name: Backup Firebase file
+        script: |
+          if [ -f android/app/google-services.json ]; then
+            cp android/app/google-services.json /tmp/google-services.json
+            echo "Backup done"
+          fi
       - name: Fix Android v1 embedding
         script: |
-          rm -rf android
-          flutter create . --platforms=android --org com.example --project-name kolne
-      - name: Get packages
-        script: flutter pub get
+          if [ ! -f android/app/src/main/kotlin/com/example/kolne/MainActivity.kt ] && [ ! -f android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java ]; then
+             rm -rf android
+             flutter create . --platforms=android
+          fi
+      - name: Restore Firebase file
+        script: |
+          if [ -f /tmp/google-services.json ]; then
+            cp /tmp/google-services.json android/app/google-services.json
+            echo "Restore done"
+          fi
       - name: Build APK
-        script: flutter build apk --release
+        script: |
+          flutter pub get
+          flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
