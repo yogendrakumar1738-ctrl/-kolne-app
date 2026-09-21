@@ -1,79 +1,34 @@
 import 'package:flutter/material.dart';
 
-void main() => runApp(
-  MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: LoginScreen(),
-  )
-);
+void main() => runApp(KolneApp());
 
+class KolneApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black),
+      home: LoginScreen(),
+    );
+  }
+}
+
+// LOGIN SCREEN - KOLNE
 class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF0A2215),
-      body: Padding(
-        padding: EdgeInsets.all(20),
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.eco, size: 80, color: Color(0xFF4ADE80)),
-            Text("Kolne 🍃", 
-              style: TextStyle(
-                color: Color(0xFF4ADE80), 
-                fontSize: 40, 
-                fontWeight: FontWeight.bold
-              )
-            ),
-            Text("All Country + All Age Welcome",
-              style: TextStyle(color: Colors.white70)
-            ),
-            SizedBox(height: 30),
-            TextField(
-              decoration: InputDecoration(
-                hintText: "+91 Phone - Any Country",
-                filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12)
-                )
-              ),
-            ),
-            SizedBox(height: 15),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF4ADE80)
-                ),
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => MainScreen())
-                  );
-                },
-                child: Text("Login OTP",
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)
-                ),
-              ),
-            ),
-            SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => MainScreen())
-                  );
-                },
-                child: Text("Continue with Google",
-                  style: TextStyle(color: Colors.white)
-                ),
-              ),
-            ),
+            Text("KOLNE 🍃", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
+            SizedBox(height: 20),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.greenAccent, foregroundColor: Colors.black),
+              onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen())),
+              child: Text("Login / Sign Up"),
+            )
           ],
         ),
       ),
@@ -81,152 +36,99 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+// MAIN SCREEN - 5 BUTTON + HIDE ON SCROLL
 class MainScreen extends StatefulWidget {
   @override
-  _MainScreenState createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  bool showBottom = true;
-  int currentIndex = 0;
-  bool isFollowing = false;
-  bool isMutual = false;
+  bool showBottomBar = true;
+  int selectedIndex = 0;
+  ScrollController scrollController = ScrollController();
 
-  void showLockDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: Text("🔒 LOCKED", style: TextStyle(color: Colors.orange)),
-        content: Text(
-          "AI Feature Lock Hai\nJaldi Unlock Hoga\n\n₹199 = 30 Video",
-          style: TextStyle(color: Colors.white)
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("OK", style: TextStyle(color: Color(0xFF4ADE80)))
-          )
-        ],
-      )
-    );
-  }
-
-  void showWarnDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Colors.black,
-        title: Text("⚠️ Warning", style: TextStyle(color: Colors.red)),
-        content: Text(
-          "Ashlil Content Allow Nahi Hai!\nOnly Natural Content 🍃",
-          style: TextStyle(color: Colors.white)
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Samajh Gaya")
-          )
-        ],
-      )
-    );
-  }
-
-  void showDownloadDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        backgroundColor: Color(0xFF0A2215),
-        title: Text("Kolne 🍃 Watermark", 
-          style: TextStyle(color: Color(0xFF4ADE80))
-        ),
-        content: Text(
-          "Video Download Hoga\nKolne Logo Ke Saath\n@username + Kolne App",
-          style: TextStyle(color: Colors.white)
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF4ADE80)
-            ),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("Downloaded with Kolne 🍃 Watermark!"))
-              );
-            },
-            child: Text("Download", style: TextStyle(color: Colors.black)),
-          )
-        ],
-      )
-    );
-  }
-
-  void showUploadSheet() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Color(0xFF0A2215),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20))
-      ),
-      builder: (_) => Container(
-        padding: EdgeInsets.all(20),
-        height: 260,
-        child: Column(
-          children: [
-            Text("Video Banao",
-              style: TextStyle(
-                color: Colors.white, 
-                fontSize: 20, 
-                fontWeight: FontWeight.bold
-              )
-            ),
-            SizedBox(height: 20),
-            ListTile(
-              leading: Icon(Icons.videocam, color: Color(0xFF4ADE80)),
-              title: Text("SELF - FREE ✅", 
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-              ),
-              subtitle: Text("Gallery se 1 Min Video",
-                style: TextStyle(color: Colors.white54)
-              ),
-              tileColor: Colors.white10,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("SELF: Gallery Open - FREE"))
-                );
-              },
-            ),
-            SizedBox(height: 12),
-            ListTile(
-              leading: Icon(Icons.lock, color: Colors.orange),
-              title: Text("AI TEXT - LOCKED 🔒",
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-              ),
-              subtitle: Text("₹199 = 30 Video - Baad Me Unlock",
-                style: TextStyle(color: Colors.white54)
-              ),
-              tileColor: Colors.white10,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)
-              ),
-              onTap: () {
-                Navigator.pop(context);
-                showLockDialog();
-              },
-            ),
-          ],
-        ),
-      )
-    );
+  @override
+  void initState() {
+    super.initState();
+    scrollController.addListener(() {
+      if (scrollController.position.pixels > 100) {
+        if (showBottomBar) setState(() => showBottomBar = false);
+      } else {
+        if (!showBottomBar) setState(() => showBottomBar = true);
+      }
+    });
   }
 
   Widget buildFeed() {
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          showBottom = !
+    return ListView.builder(
+      controller: scrollController,
+      itemCount: 10,
+      itemBuilder: (context, index) {
+        return Container(
+          height: 600,
+          color: Colors.grey[900],
+          margin: EdgeInsets.only(bottom: 2),
+          child: Stack(
+            children: [
+              Center(child: Text("Video ${index + 1} - Kolne", style: TextStyle(fontSize: 22))),
+              Positioned(
+                right: 10,
+                bottom: 80,
+                child: Column(
+                  children: [
+                    IconButton(icon: Icon(Icons.favorite, color: Colors.white, size: 35), onPressed: () {}),
+                    IconButton(icon: Icon(Icons.download, color: Colors.white), onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Downloaded with Kolne watermark")));
+                    }),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    List<Widget> pages = [buildFeed(), Center(child: Text("Search")), Center(child: Text("Inbox")), Center(child: Text("Profile"))];
+
+    return Scaffold(
+      body: selectedIndex == 0 || selectedIndex >= 2? pages[selectedIndex == 0? 0 : selectedIndex -1] : pages[0],
+      floatingActionButton: showBottomBar? FloatingActionButton(
+        backgroundColor: Colors.greenAccent,
+        onPressed: () => showModalBottomSheet(context: context, builder: (_) => Container(
+          height: 200,
+          color: Colors.black,
+          child: Column(
+            children: [
+              ListTile(title: Text("SELF FREE", style: TextStyle(color: Colors.greenAccent)), onTap: () => Navigator.pop(context)),
+              ListTile(title: Text("AI LOCKED 🔒", style: TextStyle(color: Colors.grey)), onTap: () {}),
+            ],
+          ),
+        )),
+        child: Icon(Icons.add, color: Colors.black, size: 30),
+      ) : null,
+      bottomNavigationBar: AnimatedOpacity(
+        opacity: showBottomBar? 1 : 0,
+        duration: Duration(milliseconds: 300),
+        child: showBottomBar? BottomNavigationBar(
+          backgroundColor: Colors.black,
+          selectedItemColor: Colors.greenAccent,
+          unselectedItemColor: Colors.white,
+          currentIndex: selectedIndex,
+          onTap: (i) => setState(() => selectedIndex = i),
+          type: BottomNavigationBarType.fixed,
+          items: [
+            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+            BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+            BottomNavigationBarItem(icon: Icon(Icons.add_box_outlined), label: "Create"),
+            BottomNavigationBarItem(icon: Icon(Icons.inbox), label: "Inbox"),
+            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+          ],
+        ) : SizedBox.shrink(),
+      ),
+    );
+  }
+}
