@@ -6,6 +6,10 @@ workflows:
     environment:
       flutter: stable
     scripts:
+      - name: Fix Android v1 embedding
+        script: |
+          rm -rf android
+          flutter create . --platforms=android --org com.example --project-name kolne
       - name: Get packages
         script: flutter pub get
       - name: Build APK
