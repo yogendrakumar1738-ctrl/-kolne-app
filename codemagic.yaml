@@ -9,7 +9,7 @@ workflows:
       - name: Fix Android v1 embedding
         script: |
           rm -rf android
-          flutter create --org com.kolne.app --project-name kolne --platforms=android .
+          flutter create . --platforms=android
       - name: Build APK
         script: |
           flutter pub get
