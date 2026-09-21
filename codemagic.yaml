@@ -8,9 +8,11 @@ workflows:
       xcode: latest
       cocoapods: default
     scripts:
-      - name: Get packages
+      - name: Fix Android v1 embedding
         script: |
           flutter clean
+          rm -rf android
+          flutter create --org com.kolne.app --project-name kolne . --platforms=android
           flutter pub get
       - name: Build APK
         script: |
