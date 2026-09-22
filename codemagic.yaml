@@ -7,23 +7,21 @@ workflows:
       flutter: 3.22.2
       java: 17
     scripts:
-      - name: Remove Broken FFmpeg
+      - name: Nuke Broken Code
         script: |
           rm -rf android
           flutter create . --platforms=android
-          echo "Removing broken ffmpeg package..."
+          echo "Deleting ffmpeg files..."
+          grep -r -l "ffmpeg\|FFmpeg\|watermark" lib --include="*.dart" | xargs rm -f || true
           sed -i.bak '/ffmpeg/d' pubspec.yaml || sed -i '/ffmpeg/d' pubspec.yaml
-          echo "Removing ffmpeg code from lib..."
-          find lib -type f -name "*.dart" -exec sed -i.bak '/ffmpeg/d' {} \; -exec sed -i.bak '/FFmpeg/d' {} \; -exec sed -i.bak '/FFprobe/d' {} \; || find lib -type f -name "*.dart" -exec sed -i '/ffmpeg/d' {} \; -exec sed -i '/FFmpeg/d' {} \; -exec sed -i '/FFprobe/d' {} \; || true
+          find lib -type f -name "*.dart" -exec sed -i.bak '/watermark/d; /ffmpeg/d' {} \; || find lib -type f -name "*.dart" -exec sed -i '/watermark/d; /ffmpeg/d' {} \; || true
           echo "android.useAndroidX=true" >> android/gradle.properties
-          echo "android.enableJetifier=true" >> android/gradle.properties
       - name: Get Packages
         script: |
-          flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release --no-tree-shake-icons -v
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
     publishing:
