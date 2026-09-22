@@ -1,20 +1,25 @@
 workflows:
-  kolne-apk:
-    name: KOLNE APK Fixed
+  android-workflow:
+    name: Kolne APK
     max_build_duration: 30
     instance_type: mac_mini_m2
     environment:
-      flutter: stable
+      flutter: 3.22.2
+      java: 17
     scripts:
-      - name: Get Packages
-        script: flutter pub get
       - name: Fix Old Android Code
         script: |
-          cp android/app/google-services.json /tmp/ || echo "no json"
-          flutter create --platforms=android .
-          cp /tmp/google-services.json android/app/google-services.json || echo "restoring failed"
-          flutter pub upgrade
+          echo "Fixing Android files..."
+          cd android
+          echo "org.gradle.jvmargs=-Xmx4G" > gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+      - name: Get Packages
+        script: |
+          flutter clean
+          flutter pub get
       - name: Build APK
-        script: flutter build apk --release --no-tree-shake-icons
+        script: |
+          flutter build apk --release --no-tree-shake-icons
     artifacts:
       - build/app/outputs/flutter-apk/app-release.apk
