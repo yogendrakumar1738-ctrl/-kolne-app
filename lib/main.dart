@@ -1,64 +1,53 @@
-class LoginScreen extends StatefulWidget {
+import 'package:flutter/material.dart';
+
+void main() => runApp(KolneApp());
+
+class KolneApp extends StatelessWidget {
   @override
-  State<LoginScreen> createState() => _LoginState();
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: LoginScreen(),
+    );
+  }
 }
-class _LoginState extends State<LoginScreen> {
-  TextEditingController phone = TextEditingController();
+
+class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFF22C55E), Color(0xFF7C3AED), Color(0xFFFACC15)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      backgroundColor: Colors.black,
+      body: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          Container(
+            width: 110, height: 110,
+            decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            child: Center(child: Text("K", style: TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Colors.purple))),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 110, height: 110,
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
-              child: Center(child: Text("K", style: TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)))),
-            ),
-            SizedBox(height: 15),
-            Text("KOLNE", style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, color: Colors.white, letterSpacing: 4)),
-            SizedBox(height: 80),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: TextField(
-                controller: phone,
-                keyboardType: TextInputType.phone,
-                style: TextStyle(color: Colors.white),
-                decoration: InputDecoration(
-                  prefixIcon: Icon(Icons.phone, color: Color(0xFF22C55E)),
-                  hintText: "Mobile Number",
-                  hintStyle: TextStyle(color: Colors.white54),
-                  filled: true,
-                  fillColor: Colors.black38,
-                  enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Color(0xFF22C55E), width: 2)),
-                  focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: Color(0xFFFACC15), width: 2)),
-                ),
-              ),
-            ),
-            SizedBox(height: 200),
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFACC15), minimumSize: Size(double.infinity, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
-                onPressed: () async {
-                  await FirebaseAuth.instance.signInAnonymously();
-                },
-                child: Text("LOGIN / CONTINUE", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 18)),
-              ),
-            ),
-          ],
-        ),
+          SizedBox(height: 15),
+          Text("KOLNE", style: TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, letterSpacing: 4)),
+          SizedBox(height: 30),
+          Padding(padding: EdgeInsets.symmetric(horizontal: 30),
+            child: TextField(decoration: InputDecoration(hintText: "Mobile Number", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))))),
+          SizedBox(height: 15),
+          ElevatedButton(onPressed: (){ Navigator.push(context, MaterialPageRoute(builder: (_)=>HomeScreen())); },
+            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD600), minimumSize: Size(250, 50)),
+            child: Text("LOGIN / CONTINUE", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)))
+        ]),
       ),
+    );
+  }
+}
+
+class HomeScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(title: Text("KOLNE"), backgroundColor: Colors.black),
+      body: Center(child: Text("Video Feed Aayega Yahan\nHome + Tags + + + Chat + You", textAlign: TextAlign.center, style: TextStyle(color: Colors.white))),
+      bottomNavigationBar: BottomNavigationBar(backgroundColor: Colors.black, selectedItemColor: Colors.yellow, unselectedItemColor: Colors.white, type: BottomNavigationBarType.fixed,
+        items: [BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"), BottomNavigationBarItem(icon: Icon(Icons.tag), label: "Tags"), BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 40, color: Colors.yellow), label: ""), BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"), BottomNavigationBarItem(icon: Icon(Icons.person), label: "You")]),
     );
   }
 }
