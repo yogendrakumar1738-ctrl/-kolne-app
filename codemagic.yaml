@@ -1,12 +1,21 @@
 workflows:
-  default-workflow:
-    name: KOLNE Real APK
+  android-workflow:
+    name: Android APK
+    max_build_duration: 60
+    instance_type: mac_mini_m1
     environment:
       flutter: stable
+      xcode: latest
+      cocoapods: default
     scripts:
-      - name: Fix android
-        script: flutter create . --platforms=android
+      - name: Create Android folder
+        script: |
+          flutter create . --platforms=android
+      - name: Get packages
+        script: |
+          flutter pub get
       - name: Build APK
-        script: flutter build apk --release
+        script: |
+          flutter build apk --release
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
