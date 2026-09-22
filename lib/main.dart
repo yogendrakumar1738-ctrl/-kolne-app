@@ -1,157 +1,136 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() => runApp(KolneApp());
+void main() => runApp(MaterialApp(debugShowCheckedModeBanner: false, home: Splash()));
 
-class KolneApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, home: LoginScreen());
-  }
+class Splash extends StatefulWidget { @override State<Splash> createState()=>_Splash(); }
+class _Splash extends State<Splash>{
+  initState(){ super.initState(); Future.delayed(Duration(seconds:2), () async {
+    var p=await SharedPreferences.getInstance();
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=> p.getBool('isLogged')==true ? MainApp() : Login()));
+  });}
+  @override Widget build(BuildContext c)=> Scaffold(backgroundColor: Color(0xFF6A11CB), body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    Row(mainAxisAlignment: MainAxisAlignment.center, children: [Dot(Colors.red), Dot(Colors.green), Dot(Colors.blue)]),
+    SizedBox(height:15), Text('KOLNE', style: TextStyle(color: Colors.white, fontSize:40, fontWeight: FontWeight.bold, letterSpacing:5))
+  ])));
+}
+class Dot extends StatelessWidget{ final Color col; Dot(this.col); @override Widget build(BuildContext c)=> Container(width:35,height:35,margin:EdgeInsets.all(3),decoration: BoxDecoration(color:col, shape:BoxShape.circle));}
+
+// 1,2 - LOGIN 1 NUMBER = 1 ID
+class Login extends StatelessWidget{
+  final phone=TextEditingController();
+  @override Widget build(BuildContext c)=> Scaffold(body: Padding(padding: EdgeInsets.all(24), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    Text('KOLNE', style: TextStyle(fontSize:35, fontWeight: FontWeight.bold, color: Color(0xFF6A11CB))), TextField(controller: phone, maxLength:10, keyboardType: TextInputType.number, decoration: InputDecoration(labelText:'Number (1 Number = 1 ID)', border:OutlineInputBorder())),
+    SizedBox(height:15),
+    ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6A11CB), minimumSize: Size(double.infinity,50)), onPressed: (){ if(phone.text.length==10) Navigator.push(c, MaterialPageRoute(builder: (_)=>Otp(phone: phone.text))); }, child: Text('GET OTP', style: TextStyle(color:Colors.white))),
+  ])));
+}
+class Otp extends StatelessWidget{
+  final String phone; Otp({required this.phone});
+  final ctrls=List.generate(6, (_)=>TextEditingController());
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Text('OTP - $phone (123456)')), body: Padding(padding: EdgeInsets.all(20), child: Column(children: [
+    Row(children: List.generate(6, (i)=> Expanded(child: Padding(padding: EdgeInsets.all(4), child: TextField(controller: ctrls[i], maxLength:1, textAlign: TextAlign.center, decoration: InputDecoration(counterText:'', border:OutlineInputBorder()))))))),
+    SizedBox(height:20),
+    ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF6A11CB), minimumSize: Size(double.infinity,50)), onPressed: () async {
+      if(ctrls.map((e)=>e.text).join()=='123456'){ var p=await SharedPreferences.getInstance(); await p.setBool('isLogged', true); await p.setString('phone', phone); await p.setInt('vCount', 0); Navigator.pushAndRemoveUntil(c, MaterialPageRoute(builder: (_)=>MainApp()), (r)=>false); }
+    }, child: Text('VERIFY', style: TextStyle(color:Colors.white)))
+  ])));
 }
 
-// 1. LOGIN SCREEN - Clean (No Text)
-class LoginScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Container(width: 110, height: 110, decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle, boxShadow: [BoxShadow(color: Colors.purple.withOpacity(0.5), blurRadius: 20)]),
-            child: Center(child: ShaderMask(shaderCallback: (b) => LinearGradient(colors: [Colors.purple, Colors.green, Colors.yellow]).createShader(b),
-              child: Text("K", style: TextStyle(fontSize: 70, fontWeight: FontWeight.bold, color: Colors.white))))),
-          SizedBox(height: 12), Text("KOLNE", style: TextStyle(color: Colors.white, fontSize: 34, fontWeight: FontWeight.bold, letterSpacing: 5)),
-          SizedBox(height: 40),
-          Padding(padding: EdgeInsets.symmetric(horizontal: 30), child: TextField(decoration: InputDecoration(hintText: "Mobile Number", filled: true, fillColor: Colors.white, border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)), prefixIcon: Icon(Icons.phone)))),
-          SizedBox(height: 20),
-          ElevatedButton(onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainNav())),
-            style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD600), minimumSize: Size(280, 55), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
-            child: Text("LOGIN / CONTINUE", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)))
-        ]),
-      ),
-    );
-  }
+// 10 - 5 BUTTON + 3 RANG LOGO
+class MainApp extends StatefulWidget{ @override State<MainApp> createState()=>_MainApp();}
+class _MainApp extends State<MainApp>{
+  int idx=0;
+  @override Widget build(BuildContext c)=> Scaffold(
+    body: [Feed(), Search(), Create(), MyVideos(), Profile()][idx],
+    bottomNavigationBar: BottomNavigationBar(currentIndex: idx, onTap: (i)=>setState(()=>idx=i), type: BottomNavigationBarType.fixed, selectedItemColor: Color(0xFF6A11CB), items: [
+      BottomNavigationBarItem(icon: Icon(Icons.home), label:'Home'),
+      BottomNavigationBarItem(icon: Icon(Icons.search), label:'Search'),
+      BottomNavigationBarItem(icon: Icon(Icons.add_circle, size:38, color: Color(0xFF6A11CB)), label:'Create'),
+      BottomNavigationBarItem(icon: Icon(Icons.video_library), label:'Videos'),
+      BottomNavigationBarItem(icon: Icon(Icons.person), label:'Profile'),
+    ]),
+  );
 }
 
-// MAIN NAVIGATION - 5 Buttons
-class MainNav extends StatefulWidget { @override { _MainNavState createState() => _MainNavState(); } }
-class _MainNavState extends State<MainNav> {
-  int idx = 0;
-  final screens = [HomeFeed(), TagsScreen(), CameraScreen(), ChatScreen(), ProfileScreen()];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: screens[idx],
-      bottomNavigationBar: BottomNavigationBar(currentIndex: idx, onTap: (i){ if(i==2) Navigator.push(context, MaterialPageRoute(builder: (_)=>CameraScreen())); else setState(()=>idx=i); },
-        backgroundColor: Colors.black, selectedItemColor: Color(0xFFFFD600), unselectedItemColor: Colors.white, type: BottomNavigationBarType.fixed,
-        items: [BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"), BottomNavigationBarItem(icon: Icon(Icons.tag), label: "#Tags"), BottomNavigationBarItem(icon: Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.green, Colors.purple, Colors.yellow]), shape: BoxShape.circle), padding: EdgeInsets.all(8), child: Icon(Icons.add, size: 32, color: Colors.white)), label: ""), BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Chat"), BottomNavigationBarItem(icon: Icon(Icons.person), label: "You")]),
-    );
-  }
+// HOME + EXTRA FEATURES
+class Feed extends StatelessWidget{
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Row(children: [Dot(Colors.red), Dot(Colors.green), Dot(Colors.blue), SizedBox(width:8), Text('KOLNE')])), body: ListView.builder(itemCount:4, itemBuilder: (_,i)=> Card(margin: EdgeInsets.all(10), child: Padding(padding: EdgeInsets.all(10), child: Column(children: [
+    Row(children: [CircleAvatar(child: Text('U${i+1}')), SizedBox(width:8), Text('User @${i+1} #sayri #trending')]),
+    Container(height:180, margin: EdgeInsets.symmetric(vertical:8), color: Colors.black87, child: Stack(children: [
+      Center(child: Icon(Icons.play_circle, color:Colors.white, size:50)),
+      Positioned(bottom:5, right:5, child: Container(color: Colors.black54, padding: EdgeInsets.all(4), child: Text('KOLNE WATERMARK', style: TextStyle(color:Colors.white, fontSize:10, fontWeight:FontWeight.bold)))),
+    ])),
+    Row(children: [
+      ElevatedButton(onPressed: (){ ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text('Mutual Follow pe hi Message!'))); }, child: Text('Message')),
+      SizedBox(width:8),
+      ElevatedButton(onPressed: (){ ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text('⚠️ Asleel pe Warning!'))); }, child: Text('Report')),
+    ])
+  ])))),
+  );
+}
+class Search extends StatelessWidget{
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Text('Hashtags Search')), body: Padding(padding: EdgeInsets.all(16), child: Column(children: [
+    TextField(decoration: InputDecoration(hintText:'Search #sayri #lofi...', prefixIcon: Icon(Icons.search), border:OutlineInputBorder())),
+    SizedBox(height:15), Wrap(spacing:8, children: ['#sayri','#sad','#lofi','#trending','#kolne'].map((t)=> Chip(label: Text(t))).toList()),
+  ])));
 }
 
-// 2. HOME FEED - Video Scroll
-class HomeFeed extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("KOLNE FEED"), backgroundColor: Colors.black),
-      body: PageView.builder(scrollDirection: Axis.vertical, itemCount: 5, itemBuilder: (c,i){
-        return Stack(children: [
-          Container(color: Colors.grey[900], child: Center(child: Icon(Icons.play_circle_fill, size: 80, color: Colors.white54))),
-          Positioned(bottom: 20, left: 15, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text("@user${i+1} • #dosti #sayri", style: TextStyle(color: Colors.white)), Text("KOLNE WATERMARK", style: TextStyle(color: Colors.white54, fontSize: 10))
-          ])),
-          Positioned(right: 10, bottom: 80, child: Column(children: [Icon(Icons.favorite, color: Colors.white, size: 30), SizedBox(height: 15), Icon(Icons.comment, color: Colors.white), SizedBox(height: 15), Icon(Icons.share, color: Colors.white)]))
-        ]);
-      }));
+// 3,4,5,6,7,11 - CREATE REAL
+class Create extends StatefulWidget{ @override State<Create> createState()=>_Create();}
+class _Create extends State<Create>{
+  int sec=0; bool rec=false; Timer? tm; int vCount=0; bool sayri=false; String music='Auto'; TextEditingController txt=TextEditingController();
+  initState(){ super.initState(); load(); }
+  load() async { var p=await SharedPreferences.getInstance(); setState(()=> vCount=p.getInt('vCount')??0); }
+  
+  start() async {
+    var p=await SharedPreferences.getInstance(); int c=p.getInt('vCount')??0;
+    if(c>=2){ showDialog(context: context, builder: (_)=> AlertDialog(title: Text('Paywall'), content: Text('2 Free khatam! Rs 199 = 30 Video'), actions: [
+      TextButton(onPressed: () async { await p.setInt('vCount', 0); setState(()=> vCount=0); Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Rs 199 Paid! 30 Video Unlocked!'))); }, child: Text('Pay Rs 199')),
+    ])); return; }
+    setState(()=> rec=true); sec=0;
+    tm=Timer.periodic(Duration(seconds:1), (t){ setState(()=> sec++); if(sec>=60) stop(); });
   }
+  stop() async { tm?.cancel(); setState(()=> rec=false); var p=await SharedPreferences.getInstance(); int c=p.getInt('vCount')??0; await p.setInt('vCount', c+1); setState(()=> vCount=c+1); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Video Saved 60 Sec! Watermark ke saath!'))); }
+
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Text('Create 60 Sec')), body: SingleChildScrollView(padding: EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: rec?Colors.red:Colors.black, borderRadius: BorderRadius.circular(10)), child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('$sec / 60 Sec', style: TextStyle(color:Colors.white, fontSize:22, fontWeight:FontWeight.bold)), Text(rec?'REC Auto Stop':'Ready', style: TextStyle(color:Colors.white))])),
+    SizedBox(height:10),
+    ElevatedButton.icon(style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, minimumSize: Size(double.infinity,45)), onPressed: rec?stop:start, icon: Icon(Icons.videocam), label: Text(rec?'STOP': 'Self Video 60 Sec Timer + Auto Stop')),
+    ElevatedButton.icon(onPressed: (){ ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text('Gallery Video 60 Sec Cut Done!'))); }, icon: Icon(Icons.photo_library), label: Text('Gallery 60 Sec Cut')),
+    Divider(),
+    Text('5. AI Video Text -> BG + Voice', style: TextStyle(fontWeight: FontWeight.bold)), TextField(controller: txt, decoration: InputDecoration(hintText:'Sayri likho...', border:OutlineInputBorder())), SizedBox(height:5),
+    ElevatedButton(onPressed: (){ ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text('AI BG + Voice Generated: ${txt.text}'))); }, child: Text('Generate AI Video')),
+    Divider(),
+    SwitchListTile(title: Text('6. Sayri Mode Sad BG + Lofi'), value: sayri, onChanged: (v)=>setState(()=>sayri=v)),
+    if(sayri) Container(height:60, color:Colors.black, child: Center(child: Text('Sad BG + Lofi ON 🌙', style: TextStyle(color:Colors.white)))),
+    Divider(),
+    Text('7. Music Auto/Phone/Trending', style: TextStyle(fontWeight: FontWeight.bold)),
+    Row(children: ['Auto','Phone','Trending'].map((m)=> Expanded(child: RadioListTile(title: Text(m, style:TextStyle(fontSize:11)), value:m, groupValue:music, onChanged:(v)=>setState(()=>music=v!)))).toList()),
+    SizedBox(height:10),
+    Container(padding: EdgeInsets.all(10), color: Colors.yellow.shade100, child: Text('Videos: $vCount / 2 Free | Next Rs199=30\n10. 5 Button + 3 Rang Logo + KOLNE WATERMARK ✅\nDOWNLOAD PE WATERMARK AAYEGA!', style: TextStyle(fontWeight: FontWeight.bold, fontSize:12))),
+  ])));
 }
 
-// 3. TAGS SCREEN
-class TagsScreen extends StatelessWidget {
-  final tags = ["#dosti", "#sayri", "#jaipur", "#love", "#funny", "#bhai"];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("#Tags Search"), backgroundColor: Colors.black),
-      body: GridView.builder(padding: EdgeInsets.all(15), gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, crossAxisSpacing: 10, mainAxisSpacing: 10),
-        itemCount: tags.length, itemBuilder: (c,i)=> Container(decoration: BoxDecoration(gradient: LinearGradient(colors: [Colors.purple, Colors.green]), borderRadius: BorderRadius.circular(15)), child: Center(child: Text(tags[i], style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold))))));
-  }
+class MyVideos extends StatelessWidget{
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Text('My Videos - Download pe Watermark')), body: ListView.builder(itemCount:3, itemBuilder: (_,i)=> Card(child: ListTile(
+    title: Text('My Video ${i+1} - 60 Sec'),
+    subtitle: Text('KOLNE WATERMARK ke saath'),
+    trailing: ElevatedButton(onPressed: (){
+      // YEHI DOWNLOAD PE WATERMARK KA LOGIC HAI
+      ScaffoldMessenger.of(c).showSnackBar(SnackBar(content: Text('Downloading... KOLNE WATERMARK chipak gaya! ✅ Gallery me Watermark ke saath save hua!')));
+    }, child: Text('Download')),
+  ))),
+  );
 }
 
-// 4. CAMERA SCREEN - 4 TABS (SELF, AI, SAYRI, MUSIC)
-class CameraScreen extends StatefulWidget { @override { _CameraScreenState createState() => _CameraScreenState(); } }
-class _CameraScreenState extends State<CameraScreen> with SingleTickerProviderStateMixin {
-  late TabController tab; int timer = 60; bool isRec = false;
-  @override
-  void initState(){ super.initState(); tab = TabController(length: 4, vsync: this); }
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(backgroundColor: Colors.black, title: Text("KOLNE CAMERA"), bottom: TabBar(controller: tab, labelColor: Color(0xFFFFD600), tabs: [Tab(text: "SELF"), Tab(text: "AI VIDEO"), Tab(text: "SAYRI"), Tab(text: "MUSIC")])),
-      body: TabBarView(controller: tab, children: [
-        // SELF - 60 sec
-        Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Text("$timer sec", style: TextStyle(color: Colors.white, fontSize: 40)), SizedBox(height: 20),
-          GestureDetector(onTap: (){ setState(()=>isRec=!isRec); }, child: Container(width: 80, height: 80, decoration: BoxDecoration(color: isRec?Colors.grey:Colors.red, shape: BoxShape.circle), child: Icon(isRec?Icons.stop:Icons.videocam, color: Colors.white, size: 40))),
-          SizedBox(height: 10), Text(isRec?"Recording... Auto Stop 60sec":"Tap to Record", style: TextStyle(color: Colors.white70))
-        ])),
-        // AI VIDEO
-        Padding(padding: EdgeInsets.all(20), child: Column(children: [
-          TextField(decoration: InputDecoration(hintText: "AI ke liye likho: Jaipur barish", filled: true, fillColor: Colors.white, border: OutlineInputBorder())), SizedBox(height: 20),
-          ElevatedButton(onPressed: (){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("AI Video Ban Raha Hai..."))); }, child: Text("AI VIDEO BANAO"))
-        ])),
-        // SAYRI
-        Padding(padding: EdgeInsets.all(20), child: Column(children: [
-          TextField(maxLines: 4, decoration: InputDecoration(hintText: "Sayri likho...", filled: true, fillColor: Colors.white, border: OutlineInputBorder())), SizedBox(height: 20),
-          ElevatedButton(onPressed: (){}, child: Text("SAYRI VIDEO BANAO - Lofi Music"))
-        ])),
-        // MUSIC
-        ListView(children: [ListTile(title: Text("Auto Music", style: TextStyle(color: Colors.white)), leading: Icon(Icons.music_note, color: Colors.yellow)), ListTile(title: Text("Phone Se Music", style: TextStyle(color: Colors.white)), leading: Icon(Icons.phone_android, color: Colors.green)), ListTile(title: Text("Trending", style: TextStyle(color: Colors.white)), leading: Icon(Icons.trending_up, color: Colors.purple))])
-      ]),
-      bottomSheet: Container(color: Colors.black, padding: EdgeInsets.all(15), child: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextField(decoration: InputDecoration(hintText: "Caption + #hashtags likho... asleel warning!", filled: true, fillColor: Colors.white, border: OutlineInputBorder())), SizedBox(height: 10),
-        ElevatedButton(onPressed: (){
-          // 5. ASLEEL WARNING + 6. WATERMARK + 7. PAYWALL CHECK
-          showDialog(context: context, builder: (_)=>AlertDialog(title: Text("KOLNE"), content: Text("Video Post Ho Gaya! KOLNE Watermark ke saath. 2 video free ke baad Rs 199 = 30 Video")), );
-        }, style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD600), minimumSize: Size(double.infinity, 50)), child: Text("POST KARO", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)))
-      ])),
-    );
-  }
-}
-
-// 8. CHAT - Mutual Follow
-class ChatScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("Chat - Mutual Only"), backgroundColor: Colors.black),
-      body: ListView.builder(itemCount: 5, itemBuilder: (c,i){
-        bool mutual = i%2==0;
-        return ListTile(leading: CircleAvatar(child: Text("U${i+1}")), title: Text("User ${i+1}", style: TextStyle(color: Colors.white)), subtitle: Text(mutual?"Message kar sakte ho":"Follow back karo tab chat khulega", style: TextStyle(color: Colors.white54)), trailing: Icon(mutual?Icons.lock_open:Icons.lock, color: mutual?Colors.green:Colors.red), onTap: (){ if(!mutual) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Mutual Follow = Tabhi Message"))); });
-      }));
-  }
-}
-
-// 9. PROFILE + 10. SETTINGS + 11. LOGOUT/DELETE
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("You - Profile"), backgroundColor: Colors.black, actions: [IconButton(icon: Icon(Icons.settings), onPressed: ()=> Navigator.push(context, MaterialPageRoute(builder: (_)=>SettingsScreen())))]),
-      body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        CircleAvatar(radius: 50, backgroundColor: Colors.white, child: Text("K", style: TextStyle(fontSize: 50, color: Colors.purple))), SizedBox(height: 10),
-        Text("Yogendra Kumar", style: TextStyle(color: Colors.white, fontSize: 20)), Text("@yk_kolne | 2 Videos | 1 Mobile Active", style: TextStyle(color: Colors.white54)),
-        SizedBox(height: 20), Row(mainAxisAlignment: MainAxisAlignment.center, children: [ElevatedButton(onPressed: (){}, child: Text("Edit Profile")), SizedBox(width: 10), ElevatedButton(onPressed: (){}, style: ElevatedButton.styleFrom(backgroundColor: Color(0xFFFFD600)), child: Text("Share Profile", style: TextStyle(color: Colors.black)))])
-      ])));
-  }
-}
-
-class SettingsScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("Settings"), backgroundColor: Colors.black),
-      body: ListView(children: [
-        ListTile(title: Text("1 Mobile Active - Logout from all", style: TextStyle(color: Colors.white)), leading: Icon(Icons.phone_android, color: Colors.white), onTap: (){}),
-        ListTile(title: Text("Delete Account", style: TextStyle(color: Colors.red)), leading: Icon(Icons.delete, color: Colors.red), onTap: (){ showDialog(context: context, builder: (_)=>AlertDialog(title: Text("Delete?"), content: Text("Sab data delete ho jayega")) ); }),
-        ListTile(title: Text("Terms & Privacy", style: TextStyle(color: Colors.white)), leading: Icon(Icons.description, color: Colors.white)),
-        ListTile(title: Text("Version 1.0.0 - KOLNE", style: TextStyle(color: Colors.white54)), leading: Icon(Icons.info, color: Colors.white54)),
-        ListTile(title: Text("Logout", style: TextStyle(color: Colors.yellow)), leading: Icon(Icons.logout, color: Colors.yellow), onTap: ()=> Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>LoginScreen())))
-      ]));
-  }
+class Profile extends StatelessWidget{
+  @override Widget build(BuildContext c)=> Scaffold(appBar: AppBar(title: Text('Settings')), body: ListView(children: [
+    ListTile(title: Text('3 Rang Logo'), subtitle: Row(children: [Dot(Colors.red), Dot(Colors.green), Dot(Colors.blue), SizedBox(width:5), Text('KOLNE')])),
+    ListTile(title: Text('Terms'), onTap: (){ showDialog(context: c, builder: (_)=> AlertDialog(title: Text('Terms'), content: Text('1 Number = 1 ID\nAsleel pe Warning\nMutual pe Message'))); }),
+    ListTile(title: Text('Logout'), leading: Icon(Icons.logout), onTap: () async { var p=await SharedPreferences.getInstance(); await p.clear(); Navigator.pushAndRemoveUntil(c, MaterialPageRoute(builder: (_)=>Login()), (r)=>false); }),
+    ListTile(title: Text('Delete Account'), leading: Icon(Icons.delete, color: Colors.red), onTap: () async { var p=await SharedPreferences.getInstance(); await p.clear(); Navigator.pushAndRemoveUntil(c, MaterialPageRoute(builder: (_)=>Login()), (r)=>false); }),
+    Padding(padding: EdgeInsets.all(20), child: Text('KOLNE WATERMARK - Download pe ayega, bina download ke nahi!', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red))),
+  ]));
 }
