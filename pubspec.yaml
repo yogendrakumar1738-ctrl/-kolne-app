@@ -1,26 +1,11 @@
 name: kolne
-description: Kolne - Short Video App - 1 Min Max
-publish_to: 'none'
+description: kolne
+publish_to: none
 version: 1.0.0+1
-
 environment:
-  sdk: '^3.4.0'
-
+  sdk: '>=3.0.0 <4.0.0'
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.15.0
-  cloud_firestore: ^4.15.0
-  image_picker: ^1.0.7
-  camera: ^0.10.5+5
-  video_player: ^2.7.2
-  cupertino_icons: ^1.0.6
-
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  flutter_lints: ^3.0.0
-
 flutter:
   uses-material-design: true
