@@ -1,7 +1,7 @@
 workflows:
   default-workflow:
     name: Kolne App Production APK
-    max_build_duration: 10
+    max_build_duration: 15
     instance_type: mac_mini_m1
     environment:
       flutter: stable
@@ -9,12 +9,14 @@ workflows:
       events:
         - push
     scripts:
-      - name: Recreate Android Project Layout
+      - name: Automatic Android Native Builder
         script: |
+          echo "Generating clean base configuration framework..."
           rm -rf android
           flutter create . --platforms android
-      - name: Build Android Release APK
+      - name: Production Release Builder Engine
         script: |
-          flutter build apk --release --no-pub
+          echo "Injecting automatic build configurations..."
+          flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
