@@ -1,20 +1,9 @@
-name: kolne_app
-description: Kolne - Bharat Ka Short App - 11 Features REAL
-publish_to: 'none'
-version: 1.0.0+1
-environment:
-  sdk: ">=3.0.0 <4.0.0"
 dependencies:
   flutter:
     sdk: flutter
-  firebase_core: ^2.24.0
-  firebase_auth: ^4.15.0
-  cloud_firestore: ^4.15.0
-  shared_preferences: ^2.2.2
-  device_info_plus: ^9.1.2
-  image_picker: ^1.0.7
-  camera: ^0.10.5+9
-  ffmpeg_kit_flutter_new: ^1.0.1
-  path_provider: ^2.1.1
-flutter:
-  uses-material-design: true
+  firebase_core: any
+  firebase_auth: any
+  cloud_firestore: any
+  camera: any
+  image_picker: any
+  video_player: any
