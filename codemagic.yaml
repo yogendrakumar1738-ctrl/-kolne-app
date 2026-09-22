@@ -9,17 +9,22 @@ workflows:
     scripts:
       - name: Fix Old Android Code
         script: |
-          echo "Fixing Android files..."
-          cd android
-          echo "org.gradle.jvmargs=-Xmx4G" > gradle.properties
-          echo "android.useAndroidX=true" >> gradle.properties
-          echo "android.enableJetifier=true" >> gradle.properties
+          echo "Fixing V1 Embedding..."
+          rm -rf android
+          flutter create . --platforms=android
+          echo "android.useAndroidX=true" >> android/gradle.properties
+          echo "android.enableJetifier=true" >> android/gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4G" >> android/gradle.properties
       - name: Get Packages
         script: |
           flutter clean
           flutter pub get
       - name: Build APK
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          flutter build apk --release
     artifacts:
-      - build/app/outputs/flutter-apk/app-release.apk
+      - build/app/outputs/flutter-apk/*.apk
+    publishing:
+      email:
+        recipients:
+          - yogendrakumar1738@gmail.com
