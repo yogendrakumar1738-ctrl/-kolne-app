@@ -9,14 +9,15 @@ workflows:
       events:
         - push
     scripts:
-      - name: Automatic Android Native Builder
+      - name: Force Recreate Native Core Layout
         script: |
-          echo "Generating clean base configuration framework..."
+          echo "Purging old fragments..."
           rm -rf android
-          flutter create . --platforms android
-      - name: Production Release Builder Engine
+          rm -rf ios
+          flutter create . --platforms android --project-name=kolne_app
+      - name: Compile Fast Package Bundle
         script: |
-          echo "Injecting automatic build configurations..."
-          flutter build apk --debug
+          echo "Building binary executable..."
+          flutter build apk --debug --no-pub
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
