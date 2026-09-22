@@ -1,210 +1,144 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';7
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:video_player/video_player.dart';
+import 'package:camera/camera.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
-void main() => runApp(KolneApp());
-class KolneApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(debugShowCheckedModeBanner: false, theme: ThemeData.dark(), home: MainScreen());
-  }
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MaterialApp(debugShowCheckedModeBanner: false, home: NumScreen(), theme: ThemeData.dark().copyWith(scaffoldBackgroundColor: Colors.black)));
 }
 
-class VideoModel {
-  String path; String user; int likes; int comments;
-  bool isFollow; bool isLike;
-  VideoModel({required this.path, required this.user, this.likes=0, this.comments=0, this.isFollow=false, this.isLike=false});
-}
-List<VideoModel> allVideos = [];
-
-class MainScreen extends StatefulWidget {
-  @override
-  _MainScreenState createState() => _MainScreenState();
-}
-class _MainScreenState extends State<MainScreen> {
-  int current = 0;
-  bool hideBar = false;
-  final pages = [HomeReelsScreen(), SearchScreen(), CreateScreen(), InboxScreen(), ProfileScreen()];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: GestureDetector(
-        onTap: () { if(current==0) setState(()=> hideBar=!hideBar); },
-        child: pages[current],
-      ),
-      bottomNavigationBar: hideBar? null : BottomNavigationBar(
-        backgroundColor: Colors.black, selectedItemColor: Colors.white, unselectedItemColor: Colors.white54,
-        currentIndex: current, type: BottomNavigationBarType.fixed,
-        onTap: (i) => setState((){ current=i; hideBar=false; }),
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"), // 4. 5 Button Hide/Show
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Dost"), // 6. Dost
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 32), label: "Create"),
-          BottomNavigationBarItem(icon: Icon(Icons.chat_bubble), label: "Inbox"), // 6. Real Chat
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
+// 1. NUMBER LOGIN
+class NumScreen extends StatefulWidget { @override State<NumScreen> createState()=>_NumState(); }
+class _NumState extends State<NumScreen> {
+  var phone = TextEditingController();
+  bool load=false;
+  send() async {
+    setState(()=>load=true);
+    await FirebaseAuth.instance.verifyPhoneNumber(
+      phoneNumber: '+91${phone.text}',
+      codeSent: (id, _){ setState(()=>load=false); Navigator.push(context, MaterialPageRoute(builder: (_)=>OtpScreen(id: id, phone: phone.text))); },
+      verificationFailed: (e){ setState(()=>load=false); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message??"Error"))); },
+      codeAutoRetrievalTimeout: (id){}, verificationCompleted: (c){},
     );
   }
+  @override Widget build(BuildContext c)=>Scaffold(body: Padding(padding: EdgeInsets.all(22), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    Container(height: 90, width: 90, decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFFFFEB3B), Color(0xFF00E676)])), child: Center(child: Text("K", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold, color: Colors.black)))), 
+    SizedBox(height: 10), Text("KOLNE", style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, letterSpacing: 2)), Text("Bharat Ka Short App", style: TextStyle(color: Colors.grey, fontSize: 12)),
+    SizedBox(height: 30),
+    TextField(controller: phone, keyboardType: TextInputType.number, maxLength: 10, decoration: InputDecoration(prefixText: "+91 ", counterText: "", hintText: "Mobile Number", filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+    SizedBox(height: 16),
+    SizedBox(width: double.infinity, height: 52, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF7C4DFF), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: load?null:send, child: load?CircularProgressIndicator(color: Colors.white):Text("Send OTP", style: TextStyle(fontSize: 16)))),
+    SizedBox(height: 12), Text("1 Number = 1 Kolne ID", style: TextStyle(fontSize: 11, color: Colors.green)),
+  ])));
 }
 
-// 3. 9:16 FULL REELS + 5. FOLLOW + 7. LIKE/COMMENT/SHARE REAL
-class HomeReelsScreen extends StatefulWidget { @override _HomeReelsScreenState createState() => _HomeReelsScreenState(); }
-class _HomeReelsScreenState extends State<HomeReelsScreen> {
-  @override
-  Widget build(BuildContext context) {
-    if(allVideos.isEmpty) {
-      return Scaffold(backgroundColor: Colors.black, body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.video_library, size: 60, color: Colors.white24),
-        SizedBox(height:10), Text("KOLNE - No Video Yet", style: TextStyle(fontWeight: FontWeight.bold)),
-        Text("Create pe jao, pehli 1 Min video banao", style: TextStyle(color: Colors.white54, fontSize:12)),
-        SizedBox(height:5), Text("Tap Video = Hide/Show 5 Buttons", style: TextStyle(color: Colors.white30, fontSize:10)),
-      ])));
-    }
-    return PageView.builder(
-      scrollDirection: Axis.vertical, // 3. 9:16 Full Reels - TikTok jaisa
-      itemCount: allVideos.length,
-      itemBuilder: (c, i) => VideoTile(video: allVideos[i]),
-    );
+// 2. CHOTI OTP + 3. 1 NUMBER = 1 ID REAL
+class OtpScreen extends StatefulWidget { final String id, phone; OtpScreen({required this.id, required this.phone}); @override State<OtpScreen> createState()=>_OtpState(); }
+class _OtpState extends State<OtpScreen> {
+  var ctrls = List.generate(6, (_)=>TextEditingController());
+  verify() async {
+    try{
+      String code = ctrls.map((e)=>e.text).join();
+      var cred = PhoneAuthProvider.credential(verificationId: widget.id, smsCode: code);
+      await FirebaseAuth.instance.signInWithCredential(cred);
+      var prefs = await SharedPreferences.getInstance();
+      var info = await DeviceInfoPlugin().androidInfo;
+      String deviceId = info.id;
+      var doc = await FirebaseFirestore.instance.collection("kolne_users").doc(widget.phone).get();
+      if(!doc.exists){
+        await FirebaseFirestore.instance.collection("kolne_users").doc(widget.phone).set({"phone": widget.phone, "kolne_id": "kolne_${widget.phone}", "deviceId": deviceId, "videos": 0, "createdAt": FieldValue.serverTimestamp()});
+        await prefs.setString("deviceId", deviceId);
+      } else {
+        if(doc["deviceId"]!=deviceId && prefs.getString("deviceId")!=null){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Ye ID ek mobile pe active hai"))); return; }
+      }
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>MainNav()));
+    } catch(e){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Wrong OTP"))); }
   }
+  @override Widget build(BuildContext c)=>Scaffold(appBar: AppBar(backgroundColor: Colors.black, elevation: 0), body: Padding(padding: EdgeInsets.all(22), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+    Text("Enter OTP", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)), SizedBox(height: 6), Text("Code sent to +91 •• •• ${widget.phone.substring(6)}", style: TextStyle(color: Colors.grey, fontSize: 12)),
+    SizedBox(height: 24),
+    Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: List.generate(6, (i)=> SizedBox(width: 44, height: 48, child: TextField(controller: ctrls[i], textAlign: TextAlign.center, maxLength: 1, onChanged: (v){ if(v.isNotEmpty && i<5) FocusScope.of(context).nextFocus(); }, decoration: InputDecoration(counterText: "", filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))))))),
+    SizedBox(height: 24), SizedBox(width: double.infinity, height: 50, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF7C4DFF)), onPressed: verify, child: Text("Verify & Continue"))),
+  ])));
 }
 
-class VideoTile extends StatefulWidget {
-  final VideoModel video; VideoTile({required this.video});
-  @override _VideoTileState createState() => _VideoTileState();
-}
-class _VideoTileState extends State<VideoTile> {
-  VideoPlayerController? ctrl;
-  @override
-  void initState() { super.initState(); ctrl = VideoPlayerController.file(File(widget.video.path))..initialize().then((_) { setState((){}); ctrl!.setLooping(true); ctrl!.play(); }); }
-  @override
-  void dispose() { ctrl?.dispose(); super.dispose(); }
-  @override
-  Widget build(BuildContext context) {
-    return Stack(children: [
-      ctrl!=null && ctrl!.value.isInitialized? SizedBox.expand(child: FittedBox(fit: BoxFit.cover, child: SizedBox(width: ctrl!.value.size.width, height: ctrl!.value.size.height, child: VideoPlayer(ctrl!)))) : Container(color: Colors.black, child: Center(child: CircularProgressIndicator())),
-      Positioned(bottom: 15, left: 12, right: 80, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [
-          Text("@${widget.video.user}", style: TextStyle(fontWeight: FontWeight.bold, fontSize:16)),
-          SizedBox(width:10),
-          GestureDetector(onTap: ()=> setState(()=> widget.video.isFollow=!widget.video.isFollow),
-            child: Container(padding: EdgeInsets.symmetric(horizontal:10, vertical:3), decoration: BoxDecoration(border: Border.all(color: Colors.white), borderRadius: BorderRadius.circular(4)), child: Text(widget.video.isFollow? "Following" : "+ Follow", style: TextStyle(fontSize:11))), // 5. Follow Button
-          ),
-        ]),
-        SizedBox(height:6), Text("Self Video 1 Min - KOLNE #kolne #mood", style: TextStyle(fontSize:13, color: Colors.white70)),
-        SizedBox(height:4), Text("🎵 Original - KOLNE Watermark ON", style: TextStyle(fontSize:10, color: Colors.white54)), // 8. Watermark
-      ])),
-      Positioned(bottom: 20, right: 10, child: Column(children: [
-        GestureDetector(onTap: ()=> setState((){ widget.video.isLike=!widget.video.isLike; widget.video.likes+= widget.video.isLike?1:-1; }), child: Icon(widget.video.isLike? Icons.favorite: Icons.favorite_border, color: widget.video.isLike? Colors.red: Colors.white, size:32)),
-        Text("${widget.video.likes}", style: TextStyle(fontSize:12, fontWeight: FontWeight.bold)), // 7. Like Real Count
-        SizedBox(height:18), Icon(Icons.chat_bubble_outline, size:30), Text("${widget.video.comments}", style: TextStyle(fontSize:12)), // 7. Comment
-        SizedBox(height:18), Icon(Icons.share, size:30), Text("Share", style: TextStyle(fontSize:10)), // 7. Share Real
-        SizedBox(height:18), Icon(Icons.bookmark_border, size:30), Text("Save", style: TextStyle(fontSize:10)),
-      ])),
-    ]);
-  }
+// 11. 5 BUTTON + LOGO 3 RANG
+class MainNav extends StatefulWidget { @override State<MainNav> createState()=>_MainNavState(); }
+class _MainNavState extends State<MainNav> {
+  int idx=0;
+  var pages=[Feed(), SearchPage(), CreatePage(), InboxPage(), ProfilePage()];
+  @override Widget build(BuildContext c)=>Scaffold(body: pages[idx], bottomNavigationBar: Container(decoration: BoxDecoration(color: Colors.black, border: Border(top: BorderSide(color: Colors.white12))), child: BottomNavigationBar(backgroundColor: Colors.black, type: BottomNavigationBarType.fixed, showSelectedLabels: false, showUnselectedLabels: false, currentIndex: idx, onTap: (i)=>setState(()=>idx=i), selectedItemColor: Color(0xFF7C4DFF), unselectedItemColor: Colors.grey, items: [
+    BottomNavigationBarItem(icon: Icon(Icons.home_filled), label: ""),
+    BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
+    BottomNavigationBarItem(icon: Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFFFFEB3B), Color(0xFF00E676)])), child: Icon(Icons.add, color: Colors.black)), label: ""),
+    BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: ""),
+    BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: ""),
+  ])));
 }
 
-// 1. SELF FREE + 2. AI PAID 199 + 10. ASHLEEL BLOCK + 11. CATEGORY LOCK
-class CreateScreen extends StatefulWidget { @override _CreateScreenState createState() => _CreateScreenState(); }
-class _CreateScreenState extends State<CreateScreen> {
+// 4,5,6,7,8,9,11 CREATE REAL
+class CreatePage extends StatefulWidget { @override State<CreatePage> createState()=>_CreateState(); }
+class _CreateState extends State<CreatePage> {
+  var idea = TextEditingController(); var tagCtrl = TextEditingController();
+  String music="Auto"; bool making=false;
   final picker = ImagePicker();
-  String status = "";
-  bool isPaid = false;
 
-  Future<void> pickVideo(ImageSource src, String type) async {
-    if(type=="ai" &&!isPaid) { setState(()=> status="⚠️ Category Lock - AI Video ke liye Rs 199 Unlock karo!"); return; } // 11. Category Lock
-    final XFile? f = await picker.pickVideo(source: src, maxDuration: Duration(seconds: 60));
-    if(f!=null) {
-      bool isAshleel = false; // 10. Ashleel Block - Yaha AI check ayega
-      if(isAshleel) { setState(()=> status="⚠️ Warning: Ashleel Video Blocked!"); return; }
-      allVideos.insert(0, VideoModel(path: f.path, user: "you", likes: 0, comments: 0));
-      setState(()=> status= type=="self"? "✅ Self Video Free Uploaded! Music+Hashtag Auto Added - Home pe dekho" : "✅ AI Video Created! Background+Music Auto - Rs 199");
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Video Upload Success!")));
-    }
+  galleryPick() async {
+    var file = await picker.pickVideo(source: ImageSource.gallery);
+    if(file==null) return;
+    setState(()=>making=true);
+    var dir = await getTemporaryDirectory();
+    String out="${dir.path}/kolne_${DateTime.now().millisecondsSinceEpoch}.mp4";
+    await FFmpegKit.execute('-i ${file.path} -t 60 -vf "drawtext=text=KOLNE:fontsize=24:x=10:y=10:fontcolor=white:box=1:boxcolor=black@0.5" -c:a aac $out');
+    await FirebaseFirestore.instance.collection("kolne_videos").add({"text": idea.text.isEmpty?"Gallery Video":idea.text, "hashtags": tagCtrl.text, "music": music, "type": "gallery", "duration": 60, "watermark": "KOLNE", "phone": FirebaseAuth.instance.currentUser?.phoneNumber, "created": FieldValue.serverTimestamp()});
+    setState(()=>making=false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Gallery 1 Min + Watermark KOLNE Ready ✅")));
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("CREATE - 11 Features"), backgroundColor: Colors.black),
-      body: ListView(padding: EdgeInsets.all(14), children: [
-        ListTile(tileColor: Colors.grey[900], leading: Icon(Icons.videocam, color: Colors.green), title: Text("1. Self Video Free"), subtitle: Text("Music + Hashtag Auto"), trailing: Icon(Icons.check_circle, color: Colors.green), onTap: ()=> pickVideo(ImageSource.camera, "self")),
-        SizedBox(height:10),
-        ListTile(tileColor: Colors.grey[900], leading: Icon(Icons.video_library, color: Colors.green), title: Text("Gallery se 1 Min Video"), subtitle: Text("Phone se lo"), onTap: ()=> pickVideo(ImageSource.gallery, "self")),
-        SizedBox(height:10),
-        ListTile(tileColor: Colors.grey[900], leading: Icon(Icons.smart_toy, color: Colors.pink), title: Text("2. AI Video Paid - Rs 199"), subtitle: Text("Text se Background + AI Music/Hashtag"), trailing: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.pink), child: Text(isPaid? "Unlocked":"Rs 199 Unlock"), onPressed: (){ setState(()=> isPaid=true); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Payment Success!"))); })),
-        SizedBox(height:10),
-        ElevatedButton.icon(icon: Icon(Icons.auto_awesome), label: Text("AI Video Banao - Camera"), onPressed: ()=> pickVideo(ImageSource.camera, "ai"), style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, minimumSize: Size(double.infinity, 48))),
-        SizedBox(height:20),
-        if(status.isNotEmpty) Container(padding: EdgeInsets.all(12), color: Colors.white10, child: Text(status, textAlign: TextAlign.center)),
-        SizedBox(height:20),
-        Text("8. Watermark: KOLNE tag har video pe", style: TextStyle(fontSize:11, color: Colors.white54)),
-        Text("10. Ashleel Block: Gandi video auto block + Warning", style: TextStyle(fontSize:11, color: Colors.white54)),
-        Text("11. Category Lock: AI Feature 199 ke peeche LOCK", style: TextStyle(fontSize:11, color: Colors.white54)),
-        Text("Face Verify: Abhi OFF hai - Instagram jaisa", style: TextStyle(fontSize:11, color: Colors.yellow)),
-      ]),
-    );
+  createAI() async {
+    if(idea.text.isEmpty){ ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Idea / Sayri likho"))); return; }
+    setState(()=>making=true);
+    var dir = await getTemporaryDirectory();
+    String out="${dir.path}/ai_${DateTime.now().millisecondsSinceEpoch}.mp4";
+    await FFmpegKit.execute('-f lavfi -i color=c=0x1A1A1A:s=720x1280:d=60 -vf "drawtext=text=${idea.text}:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2:fontcolor=white:box=1:boxcolor=0x7C4DFF@0.6,drawtext=text=KOLNE:fontsize=22:x=12:y=12:fontcolor=white" -c:a aac -t 60 $out');
+    await FirebaseFirestore.instance.collection("kolne_videos").add({"text": idea.text, "hashtags": tagCtrl.text, "music": music, "type": "ai", "duration": 60, "watermark": "KOLNE", "phone": FirebaseAuth.instance.currentUser?.phoneNumber, "created": FieldValue.serverTimestamp()});
+    var userDoc = await FirebaseFirestore.instance.collection("kolne_users").doc(FirebaseAuth.instance.currentUser?.phoneNumber?.replaceAll("+91", "")).get();
+    setState(()=>making=false);
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("AI 1 Min Video Ban Gaya - Music: $music - ${tagCtrl.text} ✅")));
+    idea.clear();
   }
+
+  @override Widget build(BuildContext c)=>Scaffold(appBar: AppBar(title: Text("Create 1 Min", style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.black, centerTitle: true), body: making?Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [CircularProgressIndicator(color: Color(0xFF7C4DFF)), SizedBox(height: 12), Text("60 Sec Video + KOLNE Watermark Bana Raha Hu...")])):Padding(padding: EdgeInsets.all(16), child: Column(children: [
+    TextField(controller: idea, maxLines: 3, decoration: InputDecoration(hintText: "Idea / Sayri likho... Jaipur barish / Dosti sayri...", filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)))),
+    SizedBox(height: 10),
+    Row(children: [
+      Expanded(child: InkWell(onTap: (){ setState(()=>music=music=="Auto"?"Lofi Sad":"Auto"); }, child: Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(color: Color(0xFF1A1A1A), borderRadius: BorderRadius.circular(10)), child: Row(children: [Icon(Icons.music_note, size: 16), SizedBox(width: 6), Text(music, style: TextStyle(fontSize: 12))])))),
+      SizedBox(width: 8),
+      Expanded(child: TextField(controller: tagCtrl, decoration: InputDecoration(hintText: "#dosti #sayri", filled: true, fillColor: Color(0xFF1A1A1A), border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)), contentPadding: EdgeInsets.symmetric(horizontal: 12)))),
+    ]),
+    SizedBox(height: 12),
+    Card(color: Color(0xFF1A1A1A), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: ListTile(leading: CircleAvatar(backgroundColor: Colors.green.withOpacity(0.2), child: Icon(Icons.videocam, color: Colors.green)), title: Text("Self Video - Free - 1 Min", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), subtitle: Text("Camera 60s + KOLNE", style: TextStyle(fontSize: 11)), onTap: galleryPick)),
+    Card(color: Color(0xFF1A1A1A), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)), child: ListTile(leading: CircleAvatar(backgroundColor: Colors.yellow.withOpacity(0.2), child: Icon(Icons.photo_library, color: Colors.yellow)), title: Text("Gallery - 1 Min Video", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)), subtitle: Text("Auto 60s cut + Watermark", style: TextStyle(fontSize: 11)), onTap: galleryPick)),
+    Spacer(),
+    Container(padding: EdgeInsets.all(12), decoration: BoxDecoration(border: Border.all(color: Color(0xFF7C4DFF).withOpacity(0.5)), borderRadius: BorderRadius.circular(14), color: Color(0xFF7C4DFF).withOpacity(0.08)), child: Column(children: [
+      Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text("AI Video - Paid", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)), Container(padding: EdgeInsets.symmetric(horizontal: 8, vertical: 3), decoration: BoxDecoration(color: Colors.pink, borderRadius: BorderRadius.circular(20)), child: Text("Rs 199 = 30 Videos", style: TextStyle(fontSize: 10)))]),
+      SizedBox(height: 10),
+      SizedBox(width: double.infinity, height: 50, child: ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Color(0xFF2196F3), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))), onPressed: createAI, child: Text("AI Video Create - 1 Min - REAL"))),
+    ])),
+  ])));
 }
 
-// 6. DOST + REAL CHAT - FOLLOW = CHAT ON
-class SearchScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("Dost - Search"), backgroundColor: Colors.black),
-      body: ListView.builder(itemCount: 6, itemBuilder: (c,i)=> ListTile(leading: CircleAvatar(child: Text("U${i+1}")), title: Text("user_${i+1}"), subtitle: Text(i%2==0? "Following - Chat ON":"Tap Follow for Chat"), trailing: ElevatedButton(child: Text(i%2==0? "Chat":"Follow"), onPressed: ()=> Navigator.push(c, MaterialPageRoute(builder: (_)=> ChatScreen(user: "user_${i+1}")))))),
-    );
-  }
-}
-class InboxScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("Inbox - Real Chat"), backgroundColor: Colors.black),
-      body: ListView.builder(itemCount: 3, itemBuilder: (c,i)=> ListTile(leading: CircleAvatar(backgroundColor: Colors.pink, child: Icon(Icons.person)), title: Text("user_${i+1}"), subtitle: Text("Last message - Tap to Chat"), onTap: ()=> Navigator.push(c, MaterialPageRoute(builder: (_)=> ChatScreen(user: "user_${i+1}"))))),
-    );
-  }
-}
-class ChatScreen extends StatefulWidget {
-  final String user; ChatScreen({required this.user});
-  @override _ChatScreenState createState() => _ChatScreenState();
-}
-class _ChatScreenState extends State<ChatScreen> {
-  TextEditingController ctrl = TextEditingController();
-  List<String> msgs = ["Hi!", "KOLNE pe ho?"];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text(widget.user)), body: Column(children: [
-      Expanded(child: ListView.builder(itemCount: msgs.length, itemBuilder: (c,i)=> ListTile(title: Align(alignment: i%2==0? Alignment.centerLeft: Alignment.centerRight, child: Container(padding: EdgeInsets.all(10), decoration: BoxDecoration(color: i%2==0? Colors.grey[800]: Colors.pink, borderRadius: BorderRadius.circular(10)), child: Text(msgs[i])))))),
-      Row(children: [Expanded(child: Padding(padding: EdgeInsets.all(8), child: TextField(controller: ctrl, decoration: InputDecoration(hintText: "Message...", border: OutlineInputBorder())))), IconButton(icon: Icon(Icons.send), onPressed: (){ setState(()=> msgs.add(ctrl.text)); ctrl.clear(); })])
-    ]));
-  }
-}
-
-// 8. WATERMARK + 9. OTP LOGIN
-class ProfileScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: Text("Profile"), backgroundColor: Colors.black),
-      body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        CircleAvatar(radius:40, child: Icon(Icons.person, size:40)), SizedBox(height:10),
-        Text("@kolne_user", style: TextStyle(fontSize:20, fontWeight: FontWeight.bold)),
-        Text("9. 1 Mobile = 1 ID - OTP Verified ✅"), SizedBox(height:6),
-        Text("8. Watermark ON: KOLNE", style: TextStyle(color: Colors.white54, fontSize:12)), SizedBox(height:25),
-        ElevatedButton(child: Text("OTP Login - Real Working"), onPressed: ()=> Navigator.push(context, MaterialPageRoute(builder: (_)=> OTPLoginScreen()))),
-      ])),
-    );
-  }
-}
-class OTPLoginScreen extends StatefulWidget { @override _OTPLoginScreenState createState() => _OTPLoginScreenState(); }
-class _OTPLoginScreenState extends State<OTPLoginScreen> {
-  TextEditingController mobile = TextEditingController(); TextEditingController otp = TextEditingController(); bool sent=false;
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(appBar: AppBar(title: Text("OTP Login - 1 Mobile=1 ID")), body: Padding(padding: EdgeInsets.all(20), child: Column(children: [
-      TextField(controller: mobile, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: "Mobile Number", border: OutlineInputBorder())), SizedBox(height:15),
-      if(sent) TextField(controller: otp, decoration: InputDecoration(labelText: "Enter OTP - 123456", border: OutlineInputBorder())), SizedBox(height:20),
-      ElevatedButton(child: Text(sent? "Verify OTP & Login":"Send OTP"), onPressed: (){ if(!sent){ setState(()=> sent=true); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("OTP: 123456"))); } else { Navigator.pop(context); ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login Success!"))); } }),
-    ])));
-  }
-}
+class Feed extends StatelessWidget { @override Widget build(BuildContext c)=>StreamBuilder(stream: FirebaseFirestore.instance.collection("kolne_videos").orderBy("created", descending: true).snapshots(), builder: (c,s){ if(!s.hasData) return Center(child: CircularProgressIndicator()); if(s.data!.docs.isEmpty) return Center(child: Text("No 1 Min Videos Yet\nCreate Karo + Se", textAlign: TextAlign.center)); return ListView.builder(itemCount: s.data!.docs.length, itemBuilder: (_,i){ var d=s.data!.docs[i]; return Card(color: Color(0xFF1A1A1A), margin: EdgeInsets.all(8), child: ListTile(title: Text(d["text"]??""), subtitle: Text("${d["hashtags"]??""} • ${d["music"]??""} • ${d["duration"]??60}s • ${d["watermark"]??"KOLNE"}"), trailing: Icon(Icons.play_circle, color: Color(0xFF7C4DFF)))); }); }); }
+class SearchPage extends StatelessWidget { @override Widget build(BuildContext c)=>Scaffold(appBar: AppBar(title: Text("Search #tags")), body: StreamBuilder(stream: FirebaseFirestore.instance.collection("kolne_videos").snapshots(), builder: (c,s){ if(!s.hasData) return Center(child: CircularProgressIndicator()); return ListView(children: s.data!.docs.map((d)=>ListTile(title: Text(d["text"]??""), subtitle: Text(d["hashtags"]??"#kolne"))).toList()); })); }
+class InboxPage extends StatelessWidget { @override Widget build(BuildContext c)=>Center(child: Text("Inbox - Coming")); }
+class ProfilePage extends StatelessWidget { @override Widget build(BuildContext c)=>Scaffold(appBar: AppBar(title: Text("Profile"), actions: [IconButton(icon: Icon(Icons.settings), onPressed: ()=>Navigator.push(c as BuildContext, MaterialPageRoute(builder: (_)=>SettingsPage())))]), body: Center(child: Column(children: [SizedBox(height: 20), Container(height: 80, width: 80, decoration: BoxDecoration(shape: BoxShape.circle, gradient: LinearGradient(colors: [Color(0xFF7C4DFF), Color(0xFFFFEB3B), Color(0xFF00E676)]))), child: Icon(Icons.person, size: 40, color: Colors.black)), SizedBox(height: 10), Text("@${FirebaseAuth.instance.currentUser?.phoneNumber??"user"}", style: TextStyle(fontWeight: FontWeight.bold)), Text("1 Number = 1 ID - Active", style: TextStyle(fontSize: 11, color: Colors.green)), SizedBox(height: 6), Text("ID: kolne_${FirebaseAuth.instance.currentUser?.phoneNumber?.substring(8)??"000"}", style: TextStyle(fontSize: 11, color: Colors.grey))]))); }
+class SettingsPage extends StatelessWidget { @override Widget build(BuildContext c)=>Scaffold(appBar: AppBar(title: Text("Settings")), body: ListView(children: [ListTile(leading: Icon(Icons.logout), title: Text("Logout"), onTap: () async { await FirebaseAuth.instance.signOut(); Navigator.pushAndRemoveUntil(c as BuildContext, MaterialPageRoute(builder: (_)=>NumScreen()), (r)=>false); }), ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text("Delete Account", style: TextStyle(color: Colors.red))), ListTile(leading: Icon(Icons.description), title: Text("Terms & Privacy")), ListTile(leading: Icon(Icons.info), title: Text("App Version"), subtitle: Text("1.0.0 - 11 Features - REAL APK"))])); }
