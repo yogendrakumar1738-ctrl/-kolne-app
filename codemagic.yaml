@@ -7,12 +7,14 @@ workflows:
       flutter: 3.22.2
       java: 17
     scripts:
-      - name: Fix Everything
+      - name: Remove Broken FFmpeg
         script: |
           rm -rf android
           flutter create . --platforms=android
-          echo "Fixing Dart imports..."
-          find lib -type f -name "*.dart" -print -exec sed -i "s/ffmpeg_kit_flutter/ffmpeg_kit_flutter_new/g" {} \; || true
+          echo "Removing broken ffmpeg package..."
+          sed -i.bak '/ffmpeg/d' pubspec.yaml || sed -i '/ffmpeg/d' pubspec.yaml
+          echo "Removing ffmpeg code from lib..."
+          find lib -type f -name "*.dart" -exec sed -i.bak '/ffmpeg/d' {} \; -exec sed -i.bak '/FFmpeg/d' {} \; -exec sed -i.bak '/FFprobe/d' {} \; || find lib -type f -name "*.dart" -exec sed -i '/ffmpeg/d' {} \; -exec sed -i '/FFmpeg/d' {} \; -exec sed -i '/FFprobe/d' {} \; || true
           echo "android.useAndroidX=true" >> android/gradle.properties
           echo "android.enableJetifier=true" >> android/gradle.properties
       - name: Get Packages
