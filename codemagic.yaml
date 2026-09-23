@@ -1,20 +1,18 @@
 workflows:
   default-workflow:
-    name: Kolne App Production APK
+    name: Kolne APK
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
-      flutter: 3.24.5
+      flutter: stable
       java: 17
     scripts:
-      - name: Recreate Android Fully
+      - name: Build APK
         script: |
+          flutter clean
           rm -rf android
           flutter create . --platforms=android
           flutter pub get
-          flutter doctor -v
-      - name: Build Debug APK
-        script: |
           flutter build apk --debug
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
