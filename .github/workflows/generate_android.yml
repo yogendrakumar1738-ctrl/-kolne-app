@@ -1,1 +1,18 @@
+name: Generate Android
+on: workflow_dispatch
 
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+      - run: flutter create . --platforms=android --org com.kolne.app --project-name kolne_app
+      - run: |
+          git config user.name "bot"
+          git config user.email "bot@bot.com"
+          git add android/
+          git commit -m "fix android folder" || echo "no change"
+          git push
