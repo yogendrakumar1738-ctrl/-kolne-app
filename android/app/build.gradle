@@ -1,24 +1,17 @@
-plugins {
-    id "com.android.application"
-    id "kotlin-android"
-    id "dev.flutter.flutter-gradle-plugin"
-}
-
-android {
-    namespace "com.example.kolne_app"
-    compileSdk 36
-
-    defaultConfig {
-        applicationId "com.example.kolne_app"
-        minSdk 21
-        targetSdk 36
-        versionCode 1
-        versionName "1.0.0"
-    }
-
-    buildTypes {
-        release {
-            signingConfig signingConfigs.debug
+pluginManagement {
+    def flutterSdkPath = {
+        def properties = new Properties()
+        def propertiesFile = new File(settingsDir.parentFile, "local.properties")
+        if (propertiesFile.exists()) {
+            propertiesFile.withReader("UTF-8") { reader -> properties.load(reader) }
         }
+        def sdkPath = properties.getProperty("flutter.sdk")
+        assert sdkPath != null, "flutter.sdk not set in local.properties"
+        return sdkPath
+    }
+    plugins {
+        id "dev.flutter.flutter-gradle-plugin" version "1.0.0" apply false
     }
 }
+
+include ":app"
