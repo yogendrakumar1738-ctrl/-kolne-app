@@ -1,5 +1,5 @@
-name: kolne_app
-description: Kolne - 1 min video app
+name: kolne_real
+description: Kolne - Real Bharat App
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,11 +10,12 @@ dependencies:
   flutter:
     sdk: flutter
   camera: ^0.10.5+9
-  image_picker: ^1.0.7
-  file_picker: ^10.1.9
   video_player: ^2.8.2
-  path_provider: ^2.1.2
-  permission_handler: ^11.3.1
+  image_picker: ^1.0.7
+  shared_preferences: ^2.2.2
+  share_plus: ^8.0.2
+  audioplayers: ^6.0.0
+  cupertino_icons: ^1.0.2
 
 flutter:
   uses-material-design: true
