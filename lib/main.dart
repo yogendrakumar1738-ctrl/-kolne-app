@@ -1,213 +1,160 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:camera/camera.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'dart:io';
 
-void main() { runApp(const KolneApp()); }
+List<CameraDescription> cameras = [];
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try { cameras = await availableCameras(); } catch(e){}
+  runApp(KolneApp());
+}
 
 class KolneApp extends StatelessWidget {
-  const KolneApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'KOLNE',
-      theme: ThemeData(fontFamily: 'Poppins'),
-      home: const LoginScreen(),
-    );
+  @override Widget build(BuildContext context) {
+    return MaterialApp(debugShowCheckedModeBanner: false, home: LoginScreen());
   }
 }
 
-// 1. NUMBER LOGIN + OTP 6 BOX - NO FACE
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
-  @override
-  State<LoginScreen> createState() => _LoginScreenState();
-}
-
+class LoginScreen extends StatefulWidget { @override _LoginScreenState createState() => _LoginScreenState(); }
 class _LoginScreenState extends State<LoginScreen> {
-  final phoneCtrl = TextEditingController();
-  final otpCtrls = List.generate(6, (_) => TextEditingController());
-  bool otpSent = false;
-  // 2. 1 Number = 1 ID Logic
-  final String oneDeviceId = "ONE_ID_PER_NUMBER";
+  final phoneCtrl = TextEditingController(); bool otpSent = false; final otpCtrl = TextEditingController();
+  @override Widget build(BuildContext context) {
+    return Scaffold(body: Center(child: Padding(padding: EdgeInsets.all(20), child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+      Text("KOLNE", style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)), SizedBox(height: 20),
+      TextField(controller: phoneCtrl, keyboardType: TextInputType.phone, decoration: InputDecoration(labelText: "Mobile Number", border: OutlineInputBorder())),
+      SizedBox(height: 10),
+      if(otpSent) TextField(controller: otpCtrl, decoration: InputDecoration(labelText: "Enter OTP 123456", border: OutlineInputBorder())),
+      SizedBox(height: 20),
+      ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: Size(double.infinity, 50)), onPressed: (){
+        if(!otpSent){ setState(()=>otpSent=true); } else { Navigator.pushReplacement(context, MaterialPageRoute(builder: (_)=>MainApp())); }
+      }, child: Text(otpSent? "VERIFY & ENTER" : "SEND OTP", style: TextStyle(color: Colors.white)))
+    ]))));
+  }
+}
 
-  @override
-  Widget build(BuildContext context) {
+class MainApp extends StatefulWidget { @override _MainAppState createState() => _MainAppState(); }
+class _MainAppState extends State<MainApp> {
+  int index = 2; List<Map<String,dynamic>> videos = [];
+  @override Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 10. 3 Rang Logo
-              const LogoWidget(),
-              const SizedBox(height: 30),
-              if (!otpSent)...[
-                TextField(
-                  controller: phoneCtrl,
-                  keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: "Mobile Number", hintStyle: TextStyle(color: Colors.white54),
-                    filled: true, fillColor: Colors.white10,
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12))
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6A00)),
-                  onPressed: () => setState(() => otpSent = true),
-                  child: const Text("SEND OTP - 1 Number = 1 ID"),
-                )
-              ] else...[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: List.generate(6, (i) => SizedBox(
-                    width: 45,
-                    child: TextField(
-                      controller: otpCtrls[i],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white, fontSize: 20),
-                      maxLength: 1,
-                      decoration: const InputDecoration(counterText: "", filled: true, fillColor: Colors.white10),
-                    ),
-                  )),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const MainNav())),
-                  child: const Text("VERIFY & ENTER KOLNE"),
-                )
-              ]
-            ],
-          ),
-        ),
-      ),
+      body: [FeedScreen(videos: videos), Center(child: Text("Search")), CreateScreen(onUpload: (data){ setState((){ videos.insert(0, data); index=0; }); }), Center(child: Text("Chat")), Center(child: Text("Profile"))][index],
+      bottomNavigationBar: BottomNavigationBar(currentIndex: index, onTap: (i)=>setState(()=>index=i), type: BottomNavigationBarType.fixed, selectedItemColor: Colors.orange, items: [
+        BottomNavigationBarItem(icon: Icon(Icons.home), label: "Feed"),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
+        BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 40, color: Colors.orange), label: "Create"),
+        BottomNavigationBarItem(icon: Icon(Icons.chat), label: "Chat"),
+        BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
+      ]),
     );
   }
 }
 
-class LogoWidget extends StatelessWidget {
-  const LogoWidget({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFFFF6A00), shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFF00C6FF), shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Container(width: 12, height: 12, decoration: const BoxDecoration(color: Color(0xFF7B61FF), shape: BoxShape.circle)),
-        const SizedBox(width: 10),
-        const Text("KOLNE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 28, letterSpacing: 3)),
-      ],
-    );
-  }
-}
-
-// 10. 5 BUTTON NAV
-class MainNav extends StatefulWidget {
-  const MainNav({super.key});
-  @override
-  State<MainNav> createState() => _MainNavState();
-}
-
-class _MainNavState extends State<MainNav> {
-  int idx = 0;
-  final screens = [const FeedScreen(), const SearchScreen(), const CreateScreen(), const ChatScreen(), const SettingsScreen()];
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: screens[idx],
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.black, selectedItemColor: const Color(0xFFFF6A00), unselectedItemColor: Colors.white54,
-        currentIndex: idx, type: BottomNavigationBarType.fixed,
-        onTap: (i) => setState(() => idx = i),
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Feed"),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: "Search"),
-          BottomNavigationBarItem(icon: Icon(Icons.add_circle, size: 40), label: "Create"),
-          BottomNavigationBarItem(icon: Icon(Icons.message), label: "Chat"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
-      ),
-    );
-  }
-}
-
-// 3,4,5,6,7 FEED + CREATE LOGIC
 class CreateScreen extends StatefulWidget {
-  const CreateScreen({super.key});
-  @override
-  State<CreateScreen> createState() => _CreateScreenState();
+  final Function(Map<String,dynamic>) onUpload; CreateScreen({required this.onUpload});
+  @override _CreateScreenState createState() => _CreateScreenState();
+}
+class _CreateScreenState extends State<CreateScreen> {
+  CameraController? camCtrl; bool isRecording = false; int sec = 0;
+  String selectedMusic = "Original"; String hashtags = "";
+  @override void initState(){ super.initState(); initCam(); }
+  initCam() async { if(cameras.isNotEmpty){ camCtrl = CameraController(cameras[0], ResolutionPreset.high, enableAudio: true); await camCtrl!.initialize(); if(mounted) setState((){}); } }
+  @override void dispose(){ camCtrl?.dispose(); super.dispose(); }
+  startTimer(){ sec=0; Stream.periodic(Duration(seconds: 1), (i)=>i).take(60).listen((i){ if(!isRecording) return; setState(()=>sec=i+1); if(sec>=60) stopRec(); }); }
+  startRec() async { await camCtrl?.startVideoRecording(); setState(()=>isRecording=true); startTimer(); }
+  stopRec() async { var file = await camCtrl?.stopVideoRecording(); setState(()=>isRecording=false); if(file!=null) openCaption(file.path); }
+  openCaption(String path){ showModalBottomSheet(context: context, isScrollControlled: true, backgroundColor: Colors.white, builder: (_)=>CaptionSheet(videoPath: path, music: selectedMusic, onPost: (data){ widget.onUpload(data); Navigator.pop(context); })); }
+  pickGallery() async { var picked = await ImagePicker().pickVideo(source: ImageSource.gallery); if(picked!=null) openCaption(picked.path); }
+  @override Widget build(BuildContext context) {
+    return Scaffold(appBar: AppBar(title: Text("$sec / 60 Sec ${isRecording? '● REC' : ''}"), actions: [IconButton(icon: Icon(Icons.video_library), onPressed: pickGallery)]),
+      body: Column(children: [
+        Expanded(child: camCtrl==null ||!camCtrl!.value.isInitialized? Center(child: Icon(Icons.videocam_off, size: 80)) : CameraPreview(camCtrl!)),
+        Container(color: Colors.black12, padding: EdgeInsets.all(10), child: Column(children: [
+          Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: ["Original","Lofi","Trending","Sayari"].map((m)=>ChoiceChip(label: Text(m), selected: selectedMusic==m, onSelected: (_)=>setState(()=>selectedMusic=m))).toList()),
+          SizedBox(height: 10),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            GestureDetector(onTap: isRecording? stopRec : startRec, child: Container(width: 80, height: 80, decoration: BoxDecoration(color: isRecording?Colors.red:Colors.orange, shape: BoxShape.circle, border: Border.all(color: Colors.white, width: 4)), child: Icon(isRecording?Icons.stop:Icons.videocam, color: Colors.white, size: 40))),
+          ])
+        ]))
+      ]),
+    );
+  }
 }
 
-class _CreateScreenState extends State<CreateScreen> {
-  int sec = 0; Timer? t; bool isRec = false;
-  String mode = "Normal"; String musicType = "Auto";
-  int freeVideos = 0; // 11. Paywall Logic
+class CaptionSheet extends StatefulWidget {
+  final String videoPath; final String music; final Function(Map<String,dynamic>) onPost;
+  CaptionSheet({required this.videoPath, required this.music, required this.onPost});
+  @override _CaptionSheetState createState() => _CaptionSheetState();
+}
+class _CaptionSheetState extends State<CaptionSheet> {
+  final capCtrl = TextEditingController();
+  final hashCtrl = TextEditingController(text: "#kolne ");
+  final musicSearchCtrl = TextEditingController();
+  String selectedMusic = ""; String? customMusicPath; bool isMixing = false;
 
-  void startRec() {
-    if (freeVideos >= 2) { showPaywall(); return; }
-    setState(() { isRec = true; sec = 0; });
-    t = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (sec >= 60) { stopRec(); } else { setState(() => sec++); } // 3. 60 Sec Auto Stop
+  List<String> allMusics = ["Original Audio","Lofi Beat - Slow","Trending - Viral 2024","Sayari - Dard","Arijit Singh - Channa","Punjabi - Sidhu Moose","Haryanvi - Masoom","Bhojpuri - Khesari","DJ Remix - Bass","Romantic Piano"];
+  List<String> filteredMusics = [];
+  List<String> trendingHashtags = ["#kolne","#trending","#viral","#foryou","#sayari","#lofi","#punjabi","#haryanvi","#bhojpuri","#love","#ganganagar"];
+
+  @override void initState(){
+    super.initState();
+    selectedMusic = widget.music; filteredMusics = allMusics;
+    musicSearchCtrl.addListener((){
+      setState(()=> filteredMusics = allMusics.where((m)=>m.toLowerCase().contains(musicSearchCtrl.text.toLowerCase())).toList());
     });
   }
-  void stopRec() { t?.cancel(); setState(() { isRec = false; freeVideos++; }); }
-  void showPaywall() {
-    showDialog(context: context, builder: (_) => AlertDialog(
-      title: const Text("PAYWALL - Rs 199 = 30 Video"),
-      content: const Text("2 Free khatam! Ab Rs 199 do, 30 video banao."),
-      actions: [TextButton(onPressed: () => Navigator.pop(context), child: const Text("PAY Rs 199"))],
-    ));
+
+  pickCustomMusic() async {
+    var result = await FilePicker.platform.pickFiles(type: FileType.audio);
+    if(result!= null){ setState((){ customMusicPath = result.files.single.path; selectedMusic = result.files.single.name; }); }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(backgroundColor: Colors.black, title: const LogoWidget()),
-      body: Column(
-        children: [
-          // 3. Timer
-          Text("$sec / 60 Sec", style: const TextStyle(color: Colors.white, fontSize: 24)),
-          // 5,6,7 Modes
-          Wrap(spacing: 8, children: [
-            ChoiceChip(label: const Text("AI Video"), selected: mode=="AI", onSelected: (_) => setState(() => mode="AI")), // Text -> BG + Voice
-            ChoiceChip(label: const Text("Sayri Lofi"), selected: mode=="Sayri", onSelected: (_) => setState(() => mode="Sayri")), // 6. Sad BG + Lofi
-            ChoiceChip(label: const Text("Music Auto"), selected: musicType=="Auto", onSelected: (_) => setState(() => musicType="Auto")),
-            ChoiceChip(label: const Text("Phone"), selected: musicType=="Phone", onSelected: (_) => setState(() => musicType="Phone")),
-            ChoiceChip(label: const Text("Trending"), selected: musicType=="Trending", onSelected: (_) => setState(() => musicType="Trending")),
-          ]),
-          const SizedBox(height: 20),
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              Container(width: 200, height: 350, color: Colors.white10, child: const Icon(Icons.videocam, size: 80, color: Colors.white30)),
-              // 10. WATERMARK
-              const Positioned(bottom: 10, right: 10, child: Text("KOLNE", style: TextStyle(color: Colors.white54, fontWeight: FontWeight.bold))),
-              // EXTRA: Asleel Warning
-              if (isRec) const Positioned(top: 10, child: Text("Asleel pe Warning System ON", style: TextStyle(color: Colors.red, fontSize: 10))),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: isRec? Colors.red : const Color(0xFFFF6A00), padding: const EdgeInsets.all(24), shape: const CircleBorder()),
-            onPressed: isRec? stopRec : startRec,
-            child: Icon(isRec? Icons.stop : Icons.videocam),
-          ),
-          const Text("Self Video 60 Sec + Gallery 60 Sec Cut + Hashtag + AI BG/Voice", style: TextStyle(color: Colors.white38, fontSize: 10), textAlign: TextAlign.center),
-        ],
-      ),
-    );
+  uploadNow() async {
+    setState(()=>isMixing=true);
+    String finalVideoPath = widget.videoPath;
+    if(customMusicPath!= null){
+      String outPath = "/data/data/com.example.kolne/cache/final_${DateTime.now().millisecondsSinceEpoch}.mp4";
+      await FFmpegKit.execute("-i ${widget.videoPath} -i $customMusicPath -c:v copy -map 0:v:0 -map 1:a:0 -shortest $outPath").then((s) async {
+        var state = await s.getState(); if(state.toString().contains("COMPLETED")) finalVideoPath = outPath;
+      });
+    }
+    String finalCaption = "${capCtrl.text}\n${hashCtrl.text}\n🎵 $selectedMusic";
+    widget.onPost({"path": finalVideoPath, "caption": finalCaption, "hashtags": hashCtrl.text, "music": selectedMusic});
+    setState(()=>isMixing=false);
+  }
+
+  @override Widget build(BuildContext context) {
+    return Padding(padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom), child: DraggableScrollableSheet(initialChildSize: 0.9, expand: false, builder: (_, controller)=>Padding(padding: EdgeInsets.all(15), child: ListView(controller: controller, children: [
+      Center(child: Container(width: 50, height: 5, decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(10)))), SizedBox(height: 10),
+      Text("Add Caption + Music + Hashtag", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)), SizedBox(height: 10),
+      TextField(controller: capCtrl, decoration: InputDecoration(labelText: "Caption likho...", border: OutlineInputBorder(), prefixIcon: Icon(Icons.edit))),
+      SizedBox(height: 10),
+      TextField(controller: musicSearchCtrl, decoration: InputDecoration(hintText: "Search Music - Lofi, Arijit...", border: OutlineInputBorder(), prefixIcon: Icon(Icons.search))),
+      Container(height: 100, margin: EdgeInsets.only(top:5), decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300)), child: ListView.builder(itemCount: filteredMusics.length, itemBuilder: (_, i)=>ListTile(dense:true, title: Text(filteredMusics[i]), trailing: selectedMusic==filteredMusics[i]? Icon(Icons.check, color: Colors.orange):null, onTap: ()=>setState(()=>selectedMusic=filteredMusics[i])))),
+      SizedBox(height: 8),
+      ElevatedButton.icon(icon: Icon(Icons.music_note), label: Text(customMusicPath==null? "Apna Gaana Chuno (MP3)" : "Selected: $selectedMusic"), style: ElevatedButton.styleFrom(backgroundColor: Colors.black, foregroundColor: Colors.white), onPressed: pickCustomMusic),
+      SizedBox(height: 10),
+      TextField(controller: hashCtrl, maxLines: 2, decoration: InputDecoration(labelText: "Hashtags", border: OutlineInputBorder(), prefixIcon: Icon(Icons.tag))),
+      Wrap(spacing: 5, children: trendingHashtags.map((h)=>ActionChip(label: Text(h), onPressed: (){ if(!hashCtrl.text.contains(h)) setState(()=>hashCtrl.text=hashCtrl.text+" "+h); })).toList()),
+      SizedBox(height: 20),
+      isMixing? Center(child: Column(children:[CircularProgressIndicator(), Text("Music mix ho raha hai...")])) :
+      ElevatedButton(style: ElevatedButton.styleFrom(backgroundColor: Colors.orange, minimumSize: Size(double.infinity, 50)), onPressed: uploadNow, child: Text("UPLOAD TO PUBLIC FEED 🚀", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+    ]))));
   }
 }
 
-// 8. HASHTAG SEARCH + 9. SETTINGS
-class FeedScreen extends StatelessWidget { const FeedScreen({super.key}); @override Widget build(BuildContext context) { return const Scaffold(backgroundColor: Colors.black, body: Center(child: Text("Family Video Feed - #Hashtag Search se ayega", style: TextStyle(color: Colors.white)))); } }
-class SearchScreen extends StatelessWidget { const SearchScreen({super.key}); @override Widget build(BuildContext context) { return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: const Text("#Hashtag Search")), body: const Center(child: Text("Hashtag - Search me milega", style: TextStyle(color: Colors.white)))); } }
-class ChatScreen extends StatelessWidget { const ChatScreen({super.key}); @override Widget build(BuildContext context) { return const Scaffold(backgroundColor: Colors.black, body: Center(child: Text("Mutual Follow pe hi Message - EXTRA", style: TextStyle(color: Colors.white)))); } }
-class SettingsScreen extends StatelessWidget { const SettingsScreen({super.key}); @override Widget build(BuildContext context) { return Scaffold(backgroundColor: Colors.black, appBar: AppBar(title: const Text("Settings")), body: ListView(children: const [ListTile(title: Text("Logout", style: TextStyle(color: Colors.white))), ListTile(title: Text("Delete Account", style: TextStyle(color: Colors.white))), ListTile(title: Text("Terms & Privacy", style: TextStyle(color: Colors.white)))])); } }
+class FeedScreen extends StatelessWidget {
+  final List<Map<String,dynamic>> videos; FeedScreen({required this.videos});
+  @override Widget build(BuildContext context) {
+    if(videos.isEmpty) return Center(child: Text("Koi video nahi! Create se banao 🎥"));
+    return ListView.builder(itemCount: videos.length, itemBuilder: (_, i){
+      var v = videos[i];
+      return Card(margin: EdgeInsets.all(10), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Container(height: 400, color: Colors.black, child: Center(child: Icon(Icons.play_circle, size: 60, color: Colors.white))),
+        Padding(padding: EdgeInsets.all(10), child: Text(v["caption"]?? "", style: TextStyle(fontWeight: FontWeight.w500))),
+      ]));
+    });
+  }
+}
