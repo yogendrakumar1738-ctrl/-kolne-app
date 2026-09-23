@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'dart:async';
-import 'dart:io';
 
 void main() {
   runApp(const KolneApp());
@@ -20,14 +19,13 @@ class KolneApp extends StatelessWidget {
         primaryColor: Colors.purple,
         scaffoldBackgroundColor: Colors.black,
       ),
-      // फेस वेरिफिकेशन को पूरी तरह हटाकर सीधे लॉगिन स्क्रीन पर ले जाएं
       home: const LoginScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
 }
 
-// ================= 1 & 2. रीयल नंबर लॉगिन + 6 OTP बॉक्स =================
+// ================= लॉगिन स्क्रीन =================
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -106,7 +104,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ElevatedButton(
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, minimumSize: const Size(double.infinity, 50)),
                 onPressed: () {
-                  // सीधे मुख्य ऐप के अंदर बिना किसी फेस लॉक के नेविगेट करें
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const MainNavigationLayout()),
@@ -122,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-// ================= 10. मुख्य लेआउट (5 Buttons + 3 Rang Logo + Watermark) =================
+// ================= मुख्य लेआउट (5 Buttons) =================
 class MainNavigationLayout extends StatefulWidget {
   const MainNavigationLayout({super.key});
 
@@ -134,11 +131,11 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
   int _selectedIndex = 0;
   
   final List<Widget> _screens = [
-    const VideoFeedScreen(),         // इंस्टाग्राम जैसी रील्स फ़ीड
-    const SearchHashtagsScreen(),    // सर्च ट्रेंडिंग हैशटैग्स
-    const VideoUploadScreen(),      // 60 सेकंड वीडियो क्रिएटर (सेल्फ़/गैलरी)
-    const AiSayriScreen(),          // एआई वीडियो और शायरी मोड
-    const SettingsScreen(),          // लॉगआउट, टर्म्स और डिलीट अकाउंट
+    const VideoFeedScreen(),         
+    const SearchHashtagsScreen(),    
+    const VideoUploadScreen(),      
+    const AiSayriScreen(),          
+    const SettingsScreen(),          
   ];
 
   @override
@@ -164,7 +161,7 @@ class _MainNavigationLayoutState extends State<MainNavigationLayout> {
   }
 }
 
-// ================= रीयल इंस्टाग्राम स्टाइल वीडियो फ़ीड =================
+// ================= वीडियो फ़ीड स्क्रीन =================
 class VideoFeedScreen extends StatefulWidget {
   const VideoFeedScreen({super.key});
 
@@ -178,7 +175,6 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
   @override
   void initState() {
     super.initState();
-    // यहाँ आप अपना लाइव URL या सर्वर वीडियो लिंक बदल सकते हैं
     _controller = VideoPlayerController.networkUrl(
       Uri.parse('https://github.io')
     )..initialize().then((_) {
@@ -207,13 +203,11 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
                   ),
                 )
               : const Center(child: CircularProgressIndicator(color: Colors.purpleAccent)),
-          
-          // KOLNE वॉटरमार्क (पॉइंट 10)
           Positioned(
             top: 50,
             right: 20,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, py: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(5)),
               child: const Text("KOLNE ✨", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70)),
             ),
@@ -224,7 +218,7 @@ class _VideoFeedScreenState extends State<VideoFeedScreen> {
   }
 }
 
-// ================= 3 & 4. सेल्फ़ वीडियो 60 सेकंड टाइमर + गैलरी कट =================
+// ================= वीडियो अपलोड / क्रिएटर स्क्रीन =================
 class VideoUploadScreen extends StatefulWidget {
   const VideoUploadScreen({super.key});
 
@@ -265,7 +259,7 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
   Future<void> _pickFromGallery() async {
     final XFile? video = await _picker.pickVideo(
       source: ImageSource.gallery,
-      maxDuration: const Duration(seconds: 60), // गैलरी वीडियो के लिए रीयल 60 सेकंड लिमिट ऑटो-कट
+      maxDuration: const Duration(seconds: 60), 
     );
     if (video != null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -294,3 +288,14 @@ class _VideoUploadScreenState extends State<VideoUploadScreen> {
               IconButton(
                 iconSize: 80,
                 icon: const Icon(Icons.stop_circle, color: Colors.red),
+                onPressed: stopRecording,
+              )
+            ] else ...[
+              ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.purple, padding: const EdgeInsets.all(16)),
+                onPressed: start60SecTimer,
+                icon: const Icon(Icons.videocam),
+                label: const Text("सेल्फ़ वीडियो शुरू करें (60s Timer)"),
+              ),
+              const SizedBox(height: 30),
+              ElevatedButton.icon(
