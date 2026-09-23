@@ -5,15 +5,18 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       flutter: stable
+      java: 17
     scripts:
-      - name: Create Android folder
+      - name: Clean and Create Android
         script: |
+          flutter clean
           flutter create . --platforms=android
-      - name: Get packages
-        script: |
           flutter pub get
-      - name: Build APK
+      - name: Fix Gradle and Build
         script: |
-          flutter build apk --release --no-tree-shake-icons
+          cd android
+          ./gradlew clean
+          cd ..
+          flutter build apk --debug --no-tree-shake-icons
     artifacts:
       - build/app/outputs/flutter-apk/*.apk
